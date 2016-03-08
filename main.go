@@ -17,39 +17,31 @@ func main() {
 	// mov eax, $5
 	// ret
 	code := []byte{0xb8, 0x05, 0x00, 0x00, 0x00, 0xc3}
+	mem, err := makeExecutable(code)
+	if err != nil {
+		fatal(err)
+	}
+	defer unix.Munmap(mem)
+	fmt.Println(C.run(unsafe.Pointer(&mem[0])))
+}
 
+func makeExecutable(code []byte) ([]byte, error) {
 	length := len(code)
 	prot := unix.PROT_WRITE | unix.PROT_EXEC
 	flags := unix.MAP_ANON | unix.MAP_PRIVATE
 	const fd = -1
 	const offset = 0
-
 	mem, err := unix.Mmap(fd, offset, length, prot, flags)
 	if err != nil {
-		fatal(err)
+		return nil, err
 	}
-	defer func() {
-		err := unix.Munmap(mem)
-		if err != nil {
-			fatal(err)
-		}
-		fmt.Println("munmap OK")
-	}()
 	copy(mem, code)
-	if err != nil {
-		fatal(err)
-	}
+
 	err = unix.Mprotect(mem, unix.PROT_READ|unix.PROT_EXEC)
-	fmt.Printf("%x\n", mem)
-
-	fmt.Println(C.run(unsafe.Pointer(&mem[0])))
-
-	f := func() {
-		fmt.Println("Hello from f")
+	if err != nil {
+		return nil, err
 	}
-	addr := refect.ValueOf(f).UnsafeAddr()
-	fmt.Println(addr)
-	fmt.Println(runtime.FuncForPC(addr).Name())
+	return mem, nil
 }
 
 func fatal(err error) {
