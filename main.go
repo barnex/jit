@@ -1,9 +1,9 @@
 package main
 
 import (
+	"bytes"
 	"fmt"
 	"golang.org/x/sys/unix"
-	"bytes"
 	"os"
 )
 
@@ -14,53 +14,76 @@ import (
 import "C"
 import "unsafe"
 
-var(
+var (
 	openFunc = []byte{
 		0x55,             // push   %rbp
 		0x48, 0x89, 0xe5, // mov    %rsp,%rbp
 	}
+	closeFunc = []byte{
+		0x5d, // pop    %rbp
+		0xc3, // retq
+	}
 	add10 = []byte{
 		0xf2, 0x0f, 0x58, 0xc1, // addsd  %xmm1,%xmm0
 	}
-	movabs = []byte{
-		0x48, 0xb8, // movabs ...
+	sub10 = []byte{
+		0xf2, 0x0f, 0x5c, 0xc1, // subsd  %xmm1,%xmm0
 	}
-	abs0 = []byte{
+	mul10 = []byte{
+		0xf2, 0x0f, 0x59, 0xc1, // subsd  %xmm1,%xmm0
+	}
+	div10 = []byte{
+		0xf2, 0x0f, 0x5e, 0xc1, // divsd  %xmm1,%xmm0
+	}
+	push0 = []byte{
+		0x66, 0x48, 0x0f, 0x7e, 0xc0, // movq   %xmm0,%rax
+		0x50, // push   %rax
+	}
+	pop0 = []byte{
+		0x58,                         // pop    %rax
 		0x66, 0x48, 0x0f, 0x6e, 0xc0, // movq   %rax,%xmm0
 	}
-	closeFunc = []byte{
-		0x5d, //  pop    %rbp
-		0xc3, // retq
+	pop1 = []byte{
+		0x58,                         // pop    %rax
+		0x66, 0x48, 0x0f, 0x6e, 0xc8, // movq   %rax,%xmm1
 	}
 )
 
 type codeBuffer struct{ bytes.Buffer }
 
-func(b *codeBuffer) emit(ops ...[]byte){
-	for _, op := range ops{
+func (b *codeBuffer) emit(ops ...[]byte) {
+	for _, op := range ops {
 		b.Write(op)
 	}
 }
 
-func main() {
-	//code := []byte{
-	//	0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0xf0, 0x3f, // movabs $0x3ff0000000000000,%rax
-	//}
+func cat(ops ...[]byte) []byte {
+	var cat []byte
+	for _, op := range ops {
+		cat = append(cat, op...)
+	}
+	return cat
+}
 
+// load immediate x into xmm0
+func imm0(x float64) []byte {
+	movabs := []byte{0x48, 0xb8} // movabs ...
+	imm := *((*[8]byte)(unsafe.Pointer(&x)))
+	abs0 := []byte{0x66, 0x48, 0x0f, 0x6e, 0xc0} // movq   %rax,%xmm0
+	return cat(movabs, imm[:], abs0)
+}
+
+func main() {
 	var code codeBuffer
 
-	code.emit(
-		openFunc,
-		add10,
-		closeFunc,
-	)
+	code.emit(openFunc, mul10, closeFunc)
 
 	mem, err := makeExecutable(code.Bytes())
 	if err != nil {
 		fatal(err)
 	}
 	defer unix.Munmap(mem)
-	result := C.run(unsafe.Pointer(&mem[0]), 3, 40)
+	result := C.run(unsafe.Pointer(&mem[0]), 3, 30)
 	fmt.Println(result)
 }
 
