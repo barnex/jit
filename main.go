@@ -89,7 +89,7 @@ func main() {
 
 func makeExecutable(code []byte) ([]byte, error) {
 	length := len(code)
-	prot := unix.PROT_WRITE | unix.PROT_EXEC
+	prot := unix.PROT_WRITE
 	flags := unix.MAP_ANON | unix.MAP_PRIVATE
 	const fd = -1
 	const offset = 0
