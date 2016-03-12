@@ -42,10 +42,9 @@ func cat(ops ...[]byte) []byte {
 	return cat
 }
 
-// load immediate x into xmm0
-func imm0(x float64) []byte {
+// load immediate x into rax
+func mov_imm_rax(x float64) []byte {
 	movabs := []byte{0x48, 0xb8} // movabs ...
 	imm := *((*[8]byte)(unsafe.Pointer(&x)))
-	abs0 := []byte{0x66, 0x48, 0x0f, 0x6e, 0xc0} // movq   %rax,%xmm0
-	return cat(movabs, imm[:], abs0)
+	return cat(movabs, imm[:])
 }
