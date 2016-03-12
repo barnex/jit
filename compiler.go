@@ -17,10 +17,10 @@ func (b *Buf) Compile(expr string) error {
 
 	//ast.Print(nil, root)
 
-	b.emit(openFunc)
-	b.emitExpr(root)
+	b.emit(push_rbp, mov_rsp_rbp) // function preamble
+	b.emitExpr(root)              // function body (jit code)
 	b.emit(pop_rax, mov_rax_xmm0) // result from stack returned via xmm0
-	b.emit(closeFunc)
+	b.emit(pop_rbp, ret)          // return from function
 
 	b.instr, err = makeExecutable(b.Bytes())
 	if err != nil {
@@ -38,8 +38,8 @@ func (b *Buf) emitExpr(e ast.Expr) {
 		b.emitIdent(e)
 	case *ast.BasicLit:
 		b.emitBasicLit(e)
-		case *ast.BinaryExpr:
-	b.emitBinaryExpr(e)
+	case *ast.BinaryExpr:
+		b.emitBinaryExpr(e)
 		//case *ast.UnaryExpr:
 		//	return w.compileUnaryExpr(e)
 		//case *ast.CallExpr:
@@ -73,7 +73,7 @@ func (b *Buf) emitBasicLit(e *ast.BasicLit) {
 	}
 }
 
-func (b*Buf)emitBinaryExpr(n *ast.BinaryExpr)  {
+func (b *Buf) emitBinaryExpr(n *ast.BinaryExpr) {
 
 	b.emitExpr(n.X)
 	b.emitExpr(n.Y)
