@@ -5,6 +5,11 @@ import (
 	"unsafe"
 )
 
+type Buf struct {
+	bytes.Buffer
+	instr []byte
+}
+
 var (
 	openFunc = []byte{
 		0x55,             // push   %rbp
@@ -40,9 +45,7 @@ var (
 	}
 )
 
-type codeBuffer struct{ bytes.Buffer }
-
-func (b *codeBuffer) emit(ops ...[]byte) {
+func (b *Buf) emit(ops ...[]byte) {
 	for _, op := range ops {
 		b.Write(op)
 	}

@@ -24,10 +24,17 @@ func makeExecutable(code []byte) ([]byte, error) {
 	err = unix.Mprotect(mem, unix.PROT_READ|unix.PROT_EXEC)
 	if err != nil {
 		return nil, err
+		unix.Munmap(mem)
 	}
 	return mem, nil
 }
 
-func call(mem []byte, x, y float64) float64{
-	return float64(C.run(unsafe.Pointer(&mem[0]), 3, 30))
+func (b *Buf) call(x, y float64) float64 {
+	return float64(C.run(unsafe.Pointer(&b.instr[0]), C.double(x), C.double(y)))
+}
+
+func (b *Buf) Free() {
+	unix.Munmap(b.instr)
+	b.instr = nil
+	b.Buffer.Reset()
 }
