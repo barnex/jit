@@ -8,7 +8,7 @@ import (
 func main() {
 	exprs := []string{
 		"x",
-		"1",
+		"y",
 	}
 	x := 1.0
 	y := 2.0
