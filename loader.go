@@ -1,14 +1,21 @@
-package main
+package jit
 
-import "golang.org/x/sys/unix"
+import (
+	"unsafe"
+
+	"golang.org/x/sys/unix"
+)
+
+// C wrapper for generated machine code,
+// allows us to use C calling conventions.
 
 //double run(void *code, double x, double y) {
 //  double (*func)(double, double) = code;
 //  return func(x, y);
 //}
 import "C"
-import "unsafe"
 
+// makeExecutable copies machine code to executable memory.
 func makeExecutable(code []byte) ([]byte, error) {
 	length := len(code)
 	prot := unix.PROT_WRITE
@@ -29,12 +36,8 @@ func makeExecutable(code []byte) ([]byte, error) {
 	return mem, nil
 }
 
-func (b *Buf) call(x, y float64) float64 {
-	return float64(C.run(unsafe.Pointer(&b.instr[0]), C.double(x), C.double(y)))
-}
-
-func (b *Buf) Free() {
-	unix.Munmap(b.instr)
-	b.instr = nil
-	b.Buffer.Reset()
+// call calls the machine code, which must hold a function of two float64s,
+// and returns the result.
+func call(code []byte, x, y float64) float64 {
+	return float64(C.run(unsafe.Pointer(&code[0]), C.double(x), C.double(y)))
 }

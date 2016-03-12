@@ -1,4 +1,4 @@
-package main
+package jit
 
 import (
 	"testing"
@@ -23,16 +23,36 @@ func TestJIT(t *testing.T) {
 	}
 
 	for _, test := range tests {
-		var b Buf
-		err := b.Compile(test.expr)
+		code, err := Compile(test.expr)
 		if err != nil {
 			t.Error(err)
 			continue
 		}
-		have := b.call(test.x, test.y)
-		b.Free()
+		have := code.Eval(test.x, test.y)
+		code.Free()
 		if have != test.want {
 			t.Errorf("%v with x=%v,y=%v: have %v, want: %v", test.expr, test.x, test.y, have, test.want)
 		}
+	}
+}
+
+func BenchmarkJIT(b *testing.B) {
+	code, err := Compile("(x+y)*2 + (1+x) / y")
+	if err != nil {
+		b.Fatal(err)
+	}
+	b.ResetTimer()
+	for i := 0; i < b.N; i++ {
+		code.Eval(2, 3)
+	}
+}
+
+func nativeGo(x, y float64) float64 {
+	return (x+y)*2 + (1+x)/y
+}
+
+func BenchmarkNativeGo(b *testing.B) {
+	for i := 0; i < b.N; i++ {
+		nativeGo(2, 3)
 	}
 }

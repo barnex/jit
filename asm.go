@@ -1,10 +1,8 @@
-package main
+package jit
 
-import (
-	"bytes"
-	"unsafe"
-)
+import "unsafe"
 
+// amd64 machine code
 var (
 	push_rbp      = []byte{0x55}
 	push_rax      = []byte{0x50}
@@ -26,28 +24,10 @@ var (
 	div_xmm3_xmm2 = []byte{0xf2, 0x0f, 0x5e, 0xd3}
 )
 
-type Buf struct {
-	bytes.Buffer
-	instr []byte
-}
-
-func (b *Buf) emit(ops ...[]byte) {
-	for _, op := range ops {
-		b.Write(op)
-	}
-}
-
-func cat(ops ...[]byte) []byte {
-	var cat []byte
-	for _, op := range ops {
-		cat = append(cat, op...)
-	}
-	return cat
-}
-
-// load immediate x into rax
+// mov_imm_rax returns machine code for loading an immediate value in register rax.
+// 	movq $x, %rax
 func mov_imm_rax(x float64) []byte {
 	movabs := []byte{0x48, 0xb8} // movabs ...
 	imm := *((*[8]byte)(unsafe.Pointer(&x)))
-	return cat(movabs, imm[:])
+	return append(movabs, imm[:]...)
 }

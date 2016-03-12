@@ -1,30 +1,84 @@
-package main
+/*
+Package jit provides a toy just-in-time compiler for arithmetic expressions of variables x and y. E.g.:
+	code, err := Compile("(x+1) * (y+2) / 3")
+	x, y := 1.0, 2.0
+	z := code.Eval(x, y)
+
+Works on 64-bit linux only.
+*/
+package jit
 
 import (
+	"bytes"
 	"fmt"
 	"go/ast"
 	"go/parser"
 	"go/token"
 	"reflect"
 	"strconv"
+
+	"golang.org/x/sys/unix"
 )
 
-func (b *Buf) Compile(expr string) error {
+// Code stores JIT compiled machine code and allows to evaluate it.
+type Code struct {
+	instr []byte
+}
+
+// Compile compiles an arithmetic expression, which may contain the variables x and y. E.g.:
+// 	(x+1) * (y-2)
+// If no longer needed, the returned code must be explicitly freed with Free().
+func Compile(expr string) (c *Code, e error) {
 	root, err := parser.ParseExpr(expr)
 	if err != nil {
-		return fmt.Errorf(`parse "%s": %v`, expr, err)
+		return nil, fmt.Errorf(`parse "%s": %v`, expr, err)
 	}
 
+	// catch bailout panics
+	defer func() {
+		if err := recover(); err != nil {
+			e = fmt.Errorf("%v", err)
+			c = nil
+		}
+	}()
+
+	var b buf
 	b.emit(push_rbp, mov_rsp_rbp) // function preamble
 	b.emitExpr(root)              // function body (jit code)
 	b.emit(pop_rax, mov_rax_xmm0) // result from stack returned via xmm0
 	b.emit(pop_rbp, ret)          // return from function
 
-	b.instr, err = makeExecutable(b.Bytes())
-	return err
+	instr, err := makeExecutable(((*bytes.Buffer)(&b)).Bytes())
+	if err != nil {
+		return nil, err
+	}
+	return &Code{instr}, nil
 }
 
-func (b *Buf) emitExpr(e ast.Expr) {
+// Eval executes the code, passing values for the variables x and y,
+// and returns the result.
+func (c *Code) Eval(x, y float64) float64 {
+	return call(c.instr, x, y)
+}
+
+// Free unmaps the code, after which Eval cannot be called anymore.
+func (c *Code) Free() {
+	unix.Munmap(c.instr)
+	c.instr = nil
+}
+
+// buf accumulates machine code.
+type buf bytes.Buffer
+
+// emit writes machine code to the buffer.
+func (b *buf) emit(ops ...[]byte) {
+	for _, op := range ops {
+		((*bytes.Buffer)(b)).Write(op)
+	}
+}
+
+// emitExpr compiles an expression and stores the machine code.
+func (b *buf) emitExpr(e ast.Expr) {
 	switch e := e.(type) {
 	default:
 		panic(err(e.Pos(), "syntax error:", typ(e)))
@@ -43,7 +97,8 @@ func (b *Buf) emitExpr(e ast.Expr) {
 	}
 }
 
-func (b *Buf) emitIdent(e *ast.Ident) {
+// emitIdent compiles an identifier (x or y) and stores the machine code.
+func (b *buf) emitIdent(e *ast.Ident) {
 	switch e.Name {
 	default:
 		panic(err(e.Pos(), "undefined variable:", e.Name))
@@ -54,7 +109,8 @@ func (b *Buf) emitIdent(e *ast.Ident) {
 	}
 }
 
-func (b *Buf) emitBasicLit(e *ast.BasicLit) {
+// emitBasicLit compiles a number literal, e.g. "2" and stores the machine code.
+func (b *buf) emitBasicLit(e *ast.BasicLit) {
 	switch e.Kind {
 	default:
 		panic(err(e.Pos(), "syntax error:", e.Value, "(", typ(e), ")"))
@@ -67,7 +123,8 @@ func (b *Buf) emitBasicLit(e *ast.BasicLit) {
 	}
 }
 
-func (b *Buf) emitBinaryExpr(n *ast.BinaryExpr) {
+// emitBinaryExpr compiles a binary expression, e.g. x+1, and stores the machine code.
+func (b *buf) emitBinaryExpr(n *ast.BinaryExpr) {
 	b.emitExpr(n.X)
 	b.emitExpr(n.Y)
 	b.emit(pop_rax, mov_rax_xmm3) // get right operand
