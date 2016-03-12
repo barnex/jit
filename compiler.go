@@ -15,44 +15,38 @@ func (b *Buf) Compile(expr string) error {
 		return fmt.Errorf(`parse "%s": %v`, expr, err)
 	}
 
-	//ast.Print(nil, root)
-
 	b.emit(push_rbp, mov_rsp_rbp) // function preamble
 	b.emitExpr(root)              // function body (jit code)
 	b.emit(pop_rax, mov_rax_xmm0) // result from stack returned via xmm0
 	b.emit(pop_rbp, ret)          // return from function
 
 	b.instr, err = makeExecutable(b.Bytes())
-	if err != nil {
-		return err
-	}
-
-	return nil
+	return err
 }
 
 func (b *Buf) emitExpr(e ast.Expr) {
 	switch e := e.(type) {
 	default:
-		panic(err(e.Pos(), "not allowed:", typ(e)))
+		panic(err(e.Pos(), "syntax error:", typ(e)))
 	case *ast.Ident:
 		b.emitIdent(e)
 	case *ast.BasicLit:
 		b.emitBasicLit(e)
 	case *ast.BinaryExpr:
 		b.emitBinaryExpr(e)
+	case *ast.ParenExpr:
+		b.emitExpr(e.X)
 		//case *ast.UnaryExpr:
 		//	return w.compileUnaryExpr(e)
 		//case *ast.CallExpr:
 		//	return w.compileCallExpr(e)
-		//case *ast.ParenExpr:
-		//	return w.compileExpr(e.X)
 	}
 }
 
 func (b *Buf) emitIdent(e *ast.Ident) {
 	switch e.Name {
 	default:
-		panic(err(e.Pos(), "undefined:", e.Name))
+		panic(err(e.Pos(), "undefined variable:", e.Name))
 	case "x":
 		b.emit(mov_xmm0_rax, push_rax)
 	case "y":
@@ -63,7 +57,7 @@ func (b *Buf) emitIdent(e *ast.Ident) {
 func (b *Buf) emitBasicLit(e *ast.BasicLit) {
 	switch e.Kind {
 	default:
-		panic(err(e.Pos(), "not allowed:", e.Value, "(", typ(e), ")"))
+		panic(err(e.Pos(), "syntax error:", e.Value, "(", typ(e), ")"))
 	case token.FLOAT, token.INT:
 		v, err := strconv.ParseFloat(e.Value, 64)
 		if err != nil {
@@ -74,15 +68,14 @@ func (b *Buf) emitBasicLit(e *ast.BasicLit) {
 }
 
 func (b *Buf) emitBinaryExpr(n *ast.BinaryExpr) {
-
 	b.emitExpr(n.X)
 	b.emitExpr(n.Y)
-	b.emit(pop_rax, mov_rax_xmm3) // right operand
-	b.emit(pop_rax, mov_rax_xmm2) // left operand
+	b.emit(pop_rax, mov_rax_xmm3) // get right operand
+	b.emit(pop_rax, mov_rax_xmm2) // get left operand
 
 	switch n.Op {
 	default:
-		panic(err(n.Pos(), "not allowed:", n.Op))
+		panic(err(n.Pos(), "syntax error:", n.Op))
 	case token.ADD:
 		b.emit(add_xmm3_xmm2)
 	case token.SUB:

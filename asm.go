@@ -5,11 +5,6 @@ import (
 	"unsafe"
 )
 
-type Buf struct {
-	bytes.Buffer
-	instr []byte
-}
-
 var (
 	push_rbp      = []byte{0x55}
 	push_rax      = []byte{0x50}
@@ -30,6 +25,11 @@ var (
 	sub_xmm3_xmm2 = []byte{0xf2, 0x0f, 0x5c, 0xd3}
 	div_xmm3_xmm2 = []byte{0xf2, 0x0f, 0x5e, 0xd3}
 )
+
+type Buf struct {
+	bytes.Buffer
+	instr []byte
+}
 
 func (b *Buf) emit(ops ...[]byte) {
 	for _, op := range ops {
