@@ -25,6 +25,7 @@ import (
 // Code stores JIT compiled machine code and allows to evaluate it.
 type Code struct {
 	instr []byte
+	f     func() float64
 }
 
 // Compile compiles an arithmetic expression, which may contain the variables x and y. E.g.:
@@ -50,23 +51,24 @@ func Compile(expr string) (c *Code, e error) {
 	b.emit(pop_rax, mov_rax_xmm0) // result from stack returned via xmm0
 	b.emit(pop_rbp, ret)          // return from function
 
-	instr, err := makeExecutable(((*bytes.Buffer)(&b)).Bytes())
+	instr, err := MakeExecutable(((*bytes.Buffer)(&b)).Bytes())
 	if err != nil {
 		return nil, err
 	}
-	return &Code{instr}, nil
+	return &Code{instr, MakeFunc(instr)}, nil
 }
 
 // Eval executes the code, passing values for the variables x and y,
 // and returns the result.
 func (c *Code) Eval(x, y float64) float64 {
-	return call(c.instr, x, y)
+	return c.f()
 }
 
 // Free unmaps the code, after which Eval cannot be called anymore.
 func (c *Code) Free() {
 	unix.Munmap(c.instr)
 	c.instr = nil
+	c.f = nil
 }
 
 // buf accumulates machine code.
