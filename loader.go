@@ -9,7 +9,7 @@ import (
 // MakeExecutable copies machine code to executable memory.
 // The returned memory must be freed with unix.Munmap.
 func MakeExecutable(code []byte) ([]byte, error) {
-	exec, err := unix.Mmap(-1, 0, len(code), unix.PROT_WRITE, unix.MAP_ANON | unix.MAP_PRIVATE)
+	exec, err := unix.Mmap(-1, 0, len(code), unix.PROT_WRITE, unix.MAP_ANON|unix.MAP_PRIVATE)
 	if err != nil {
 		return nil, err
 	}
@@ -22,9 +22,9 @@ func MakeExecutable(code []byte) ([]byte, error) {
 	return exec, nil
 }
 
-func MakeFunc(instr []byte) func() float64 {
+func MakeFunc(instr []byte) func(float64, float64) float64 {
 	fStruct := &funcData{funcPtr: unsafe.Pointer(&instr[0])}
-	return *(*func() float64)(unsafe.Pointer(&fStruct))
+	return *(*func(float64, float64) float64)(unsafe.Pointer(&fStruct))
 }
 
 // funcData is a data structure that a Go function value may refer to.

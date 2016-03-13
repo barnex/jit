@@ -1,6 +1,7 @@
 package jit
 
 import (
+	"runtime"
 	"testing"
 )
 
@@ -23,17 +24,23 @@ func TestJIT(t *testing.T) {
 	}
 
 	for _, test := range tests {
+		runtime.GC()
 		code, err := Compile(test.expr)
+		runtime.GC()
 		if err != nil {
 			t.Error(err)
 			continue
 		}
 		have := code.Eval(test.x, test.y)
+		runtime.GC()
 		code.Free()
+		runtime.GC()
 		if have != test.want {
 			t.Errorf("%v with x=%v,y=%v: have %v, want: %v", test.expr, test.x, test.y, have, test.want)
 		}
 	}
+
+	//note: calling runtime.GC() in an attempt to detect some types of memory corruption
 }
 
 func BenchmarkJIT(b *testing.B) {

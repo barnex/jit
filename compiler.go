@@ -25,7 +25,7 @@ import (
 // Code stores JIT compiled machine code and allows to evaluate it.
 type Code struct {
 	instr []byte
-	f     func() float64
+	f     func(float64, float64) float64
 }
 
 // Compile compiles an arithmetic expression, which may contain the variables x and y. E.g.:
@@ -61,7 +61,7 @@ func Compile(expr string) (c *Code, e error) {
 // Eval executes the code, passing values for the variables x and y,
 // and returns the result.
 func (c *Code) Eval(x, y float64) float64 {
-	return c.f()
+	return c.f(x, y)
 }
 
 // Free unmaps the code, after which Eval cannot be called anymore.
