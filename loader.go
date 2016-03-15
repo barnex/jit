@@ -1,3 +1,4 @@
+
 package jit
 
 import (
@@ -9,6 +10,12 @@ import (
 // C wrapper for generated machine code,
 // allows us to use C calling conventions.
 
+//#cgo LDFLAGS: -lm
+//
+//#include <math.h>
+//
+//void* func_sqrt = sqrt;
+//
 //double run(void *code, double x, double y) {
 //  double (*func)(double, double) = code;
 //  return func(x, y);
