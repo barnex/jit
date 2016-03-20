@@ -22,12 +22,25 @@ var (
 	mul_xmm3_xmm2 = []byte{0xf2, 0x0f, 0x59, 0xd3}
 	sub_xmm3_xmm2 = []byte{0xf2, 0x0f, 0x5c, 0xd3}
 	div_xmm3_xmm2 = []byte{0xf2, 0x0f, 0x5e, 0xd3}
+	call_rax      = []byte{0xff, 0xd0}
 )
 
 // mov_imm_rax returns machine code for loading an immediate value in register rax.
 // 	movq $x, %rax
-func mov_imm_rax(x float64) []byte {
-	movabs := []byte{0x48, 0xb8} // movabs ...
+func mov_float_rax(x float64) []byte {
 	imm := *((*[8]byte)(unsafe.Pointer(&x)))
-	return append(movabs, imm[:]...)
+	return mov_imm_rax(imm)
+}
+
+func mov_uint_rax(x uintptr) []byte {
+	imm := *((*[8]byte)(unsafe.Pointer(&x)))
+	return mov_imm_rax(imm)
+}
+
+func mov_imm_rax(x [8]byte) []byte {
+	return append([]byte{0x48, 0xb8}, x[:]...)
+}
+
+func call_imm(a uint32) []byte {
+	return append([]byte{0xff, 0x15}, (*((*[4]byte)(unsafe.Pointer(&a))))[:]...)
 }

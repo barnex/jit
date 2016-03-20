@@ -16,6 +16,7 @@ import (
 	"go/ast"
 	"go/parser"
 	"go/token"
+	"os"
 	"reflect"
 	"strconv"
 
@@ -50,11 +51,22 @@ func Compile(expr string) (c *Code, e error) {
 	b.emit(pop_rax, mov_rax_xmm0) // result from stack returned via xmm0
 	b.emit(pop_rbp, ret)          // return from function
 
+	b.dump("b.out")
+
 	instr, err := makeExecutable(((*bytes.Buffer)(&b)).Bytes())
 	if err != nil {
 		return nil, err
 	}
 	return &Code{instr}, nil
+}
+
+func (b *buf) dump(fname string) {
+	f, err := os.Create(fname)
+	if err != nil {
+		panic(err)
+	}
+	defer f.Close()
+	f.Write(((*bytes.Buffer)(b)).Bytes())
 }
 
 // Eval executes the code, passing values for the variables x and y,
@@ -92,11 +104,25 @@ func (b *buf) emitExpr(e ast.Expr) {
 		b.emitBinaryExpr(e)
 	case *ast.ParenExpr:
 		b.emitExpr(e.X)
-		//case *ast.UnaryExpr:
-		//	return w.compileUnaryExpr(e)
-		//case *ast.CallExpr:
-		//	return w.compileCallExpr(e)
+	//case *ast.UnaryExpr:
+	//	return w.compileUnaryExpr(e)
+	case *ast.CallExpr:
+		b.emitCall(e)
 	}
+}
+
+func (b *buf) emitCall(e *ast.CallExpr) {
+	//b.emit(pop_rax, mov_rax_xmm2)
+	//b.emit(mov_xmm0_rax, push_rax)
+	//b.emit(mov_xmm1_rax, push_rax)
+	//b.emit(mov_xmm2_rax)
+	//b.emit(mov_rax_xmm0)
+	b.emit(mov_uint_rax(c_sqrt), call_rax)
+	//b.emit(mov_xmm0_rax, mov_rax_xmm2)
+	//b.emit(pop_rax, mov_rax_xmm1)
+	//b.emit(pop_rax, mov_rax_xmm0)
+	//b.emit(mov_xmm2_rax)
+	b.emit(mov_xmm0_rax, push_rax)
 }
 
 // emitIdent compiles an identifier (x or y) and stores the machine code.
@@ -121,7 +147,7 @@ func (b *buf) emitBasicLit(e *ast.BasicLit) {
 		if err != nil {
 			panic(err)
 		}
-		b.emit(mov_imm_rax(v), push_rax)
+		b.emit(mov_float_rax(v), push_rax)
 	}
 }
 

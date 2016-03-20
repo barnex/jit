@@ -1,7 +1,7 @@
-
 package jit
 
 import (
+	"fmt"
 	"unsafe"
 
 	"golang.org/x/sys/unix"
@@ -21,6 +21,15 @@ import (
 //  return func(x, y);
 //}
 import "C"
+
+var (
+	c_sqrt = uintptr(C.func_sqrt)
+	xxx    = TestSqrt
+)
+
+func init() {
+	fmt.Printf("sqrt @ %x \n", c_sqrt)
+}
 
 // makeExecutable copies machine code to executable memory.
 func makeExecutable(code []byte) ([]byte, error) {
@@ -47,4 +56,8 @@ func makeExecutable(code []byte) ([]byte, error) {
 // and returns the result.
 func call(code []byte, x, y float64) float64 {
 	return float64(C.run(unsafe.Pointer(&code[0]), C.double(x), C.double(y)))
+}
+
+func TestSqrt() float64 {
+	return float64(C.sqrt(9))
 }
