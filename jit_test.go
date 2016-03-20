@@ -1,29 +1,32 @@
 package jit
 
 import (
+	"math"
 	"testing"
 )
 
+func sqrt(x float64) float64 { return math.Sqrt(x) }
+
 func TestJIT(t *testing.T) {
-	x, y := 42.0, 666.0
+	for _, x := range []float64{-1e9, -123.4, -1, 0, 1, 123.4, 1e9}{
+	for _, y := range []float64{-1e9, -123.4, -1, 0, 1, 123.4, 1e9}{
 	tests := []struct {
 		expr string
-		x, y float64
 		want float64
 	}{
-		{"x", x, y, x},
-		{"y", x, y, y},
-		{"1", x, y, 1},
-		{"1.0", x, y, 1},
-		{"1+2", x, y, 1+2},
-		{"1-2", x, y, 1-2},
-		{"2*3", x, y, 2*3},
-		{"5/2", x, y, 5./2.},
-		{"2*(x+y)*(x-y)/2", 2, 3, -5},
-		{"1+1+1+1+1+1+1+1+1+1+1+1", 666, 666, 12},
-		{"sqrt(x)", 9, 666, 3},
-		{"sqrt(9)", 666, 666, 3},
-		{"sqrt(x+y)", 9, 16, 5},
+		{"x",  x},
+		{"y",  y},
+		{"1",  1},
+		{"1.0",  1},
+		{"1+2",  1 + 2},
+		{"1-2",  1 - 2},
+		{"2*3",  2 * 3},
+		{"5/2",  5. / 2.},
+		{"2*(x+y)*(x-y)/2",  2 * (x + y) * (x - y) / 2},
+		{"1+1+1+1+1+1+1+1+1+1+1+1",  1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1},
+		{"sqrt(x)", sqrt(x)},
+		{"sqrt(9)",  sqrt(9)},
+		{"sqrt(x+y)", sqrt(x + y)},
 	}
 
 	for _, test := range tests {
@@ -32,12 +35,21 @@ func TestJIT(t *testing.T) {
 			t.Error(err)
 			continue
 		}
-		have := code.Eval(test.x, test.y)
+		have := code.Eval(x, y)
 		code.Free()
-		if have != test.want {
-			t.Errorf("%v with x=%v,y=%v: have %v, want: %v", test.expr, test.x, test.y, have, test.want)
+		if !equal(have,test.want) {
+			t.Errorf("%v with x=%v,y=%v: have %v, want: %v", test.expr, x, y, have, test.want)
 		}
 	}
+	}}
+}
+
+// equal returns whether x == y, treating NaN's as equal
+func equal(x, y float64)bool{
+	if math.IsNaN(x) && math.IsNaN(y){
+		return true
+	}
+	return x == y
 }
 
 func BenchmarkJIT(b *testing.B) {

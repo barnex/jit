@@ -112,7 +112,9 @@ func (b *buf) emitExpr(e ast.Expr) {
 }
 
 func (b *buf) emitCall(e *ast.CallExpr) {
-	if len(e.Args) != 1{panic("need one arg")}
+	if len(e.Args) != 1 {
+		panic("need one arg")
+	}
 	b.emitExpr(e.Args[0])
 
 	b.emit(pop_rax, mov_rax_xmm2)
