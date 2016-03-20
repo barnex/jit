@@ -112,17 +112,20 @@ func (b *buf) emitExpr(e ast.Expr) {
 }
 
 func (b *buf) emitCall(e *ast.CallExpr) {
-	//b.emit(pop_rax, mov_rax_xmm2)
-	//b.emit(mov_xmm0_rax, push_rax)
-	//b.emit(mov_xmm1_rax, push_rax)
-	//b.emit(mov_xmm2_rax)
-	//b.emit(mov_rax_xmm0)
-	b.emit(mov_uint_rax(c_sqrt), call_rax)
-	//b.emit(mov_xmm0_rax, mov_rax_xmm2)
-	//b.emit(pop_rax, mov_rax_xmm1)
-	//b.emit(pop_rax, mov_rax_xmm0)
-	//b.emit(mov_xmm2_rax)
+	if len(e.Args) != 1{panic("need one arg")}
+	b.emitExpr(e.Args[0])
+
+	b.emit(pop_rax, mov_rax_xmm2)
 	b.emit(mov_xmm0_rax, push_rax)
+	b.emit(mov_xmm1_rax, push_rax)
+	b.emit(mov_xmm2_rax)
+	b.emit(mov_rax_xmm0)
+	b.emit(mov_uint_rax(c_sqrt), call_rax)
+	b.emit(mov_xmm0_rax, mov_rax_xmm2)
+	b.emit(pop_rax, mov_rax_xmm1)
+	b.emit(pop_rax, mov_rax_xmm0)
+	b.emit(mov_xmm2_rax)
+	b.emit(mov_xmm2_rax, push_rax)
 }
 
 // emitIdent compiles an identifier (x or y) and stores the machine code.
