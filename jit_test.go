@@ -29,9 +29,10 @@ func TestJIT(t *testing.T) {
 				{"sqrt(x)", sqrt(x)},
 				{"sqrt(9)", sqrt(9)},
 				{"sqrt(x+y)", sqrt(x + y)},
-				{"sin(x)", sin(x)},
+				{"sin(2/x)+cos(sqrt(x+y+1))", sin(2/x)+cos(sqrt(x+y+1))},
 				{"cos(9)", cos(9)},
 				{"sin(x+y)", sin(x + y)},
+				{"sqrt(sqrt(sqrt(x)))", sqrt(sqrt(sqrt(x)))},
 			}
 
 			for _, test := range tests {
