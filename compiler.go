@@ -113,16 +113,22 @@ func (b *buf) emitExpr(e ast.Expr) {
 
 func (b *buf) emitCall(e *ast.CallExpr) {
 	if len(e.Args) != 1 {
-		panic("need one arg")
+		panic(err(e.Pos(), "need one argument"))
 	}
 	b.emitExpr(e.Args[0])
+
+	name := e.Fun.(*ast.Ident).Name
+	fptr := funcs[name]
+	if fptr == 0 {
+		panic(err(e.Pos(), "undefined:", name))
+	}
 
 	b.emit(pop_rax, mov_rax_xmm2)
 	b.emit(mov_xmm0_rax, push_rax)
 	b.emit(mov_xmm1_rax, push_rax)
 	b.emit(mov_xmm2_rax)
 	b.emit(mov_rax_xmm0)
-	b.emit(mov_uint_rax(c_sqrt), call_rax)
+	b.emit(mov_uint_rax(fptr), call_rax)
 	b.emit(mov_xmm0_rax, mov_rax_xmm2)
 	b.emit(pop_rax, mov_rax_xmm1)
 	b.emit(pop_rax, mov_rax_xmm0)

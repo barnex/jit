@@ -6,50 +6,59 @@ import (
 )
 
 func sqrt(x float64) float64 { return math.Sqrt(x) }
+func sin(x float64) float64  { return math.Sin(x) }
+func cos(x float64) float64  { return math.Cos(x) }
 
 func TestJIT(t *testing.T) {
-	for _, x := range []float64{-1e9, -123.4, -1, 0, 1, 123.4, 1e9}{
-	for _, y := range []float64{-1e9, -123.4, -1, 0, 1, 123.4, 1e9}{
-	tests := []struct {
-		expr string
-		want float64
-	}{
-		{"x",  x},
-		{"y",  y},
-		{"1",  1},
-		{"1.0",  1},
-		{"1+2",  1 + 2},
-		{"1-2",  1 - 2},
-		{"2*3",  2 * 3},
-		{"5/2",  5. / 2.},
-		{"2*(x+y)*(x-y)/2",  2 * (x + y) * (x - y) / 2},
-		{"1+1+1+1+1+1+1+1+1+1+1+1",  1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1},
-		{"sqrt(x)", sqrt(x)},
-		{"sqrt(9)",  sqrt(9)},
-		{"sqrt(x+y)", sqrt(x + y)},
-	}
+	for _, x := range []float64{-1e9, -123.4, -1, 0, 1, 123.4, 1e9} {
+		for _, y := range []float64{-1e9, -123.4, -1, 0, 1, 123.4, 1e9} {
+			tests := []struct {
+				expr string
+				want float64
+			}{
+				{"x", x},
+				{"y", y},
+				{"1", 1},
+				{"1.0", 1},
+				{"1+2", 1 + 2},
+				{"1-2", 1 - 2},
+				{"2*3", 2 * 3},
+				{"5/2", 5. / 2.},
+				{"2*(x+y)*(x-y)/2", 2 * (x + y) * (x - y) / 2},
+				{"1+1+1+1+1+1+1+1+1+1+1+1", 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1},
+				{"sqrt(x)", sqrt(x)},
+				{"sqrt(9)", sqrt(9)},
+				{"sqrt(x+y)", sqrt(x + y)},
+				{"sin(x)", sin(x)},
+				{"cos(9)", cos(9)},
+				{"sin(x+y)", sin(x + y)},
+			}
 
-	for _, test := range tests {
-		code, err := Compile(test.expr)
-		if err != nil {
-			t.Error(err)
-			continue
-		}
-		have := code.Eval(x, y)
-		code.Free()
-		if !equal(have,test.want) {
-			t.Errorf("%v with x=%v,y=%v: have %v, want: %v", test.expr, x, y, have, test.want)
+			for _, test := range tests {
+				code, err := Compile(test.expr)
+				if err != nil {
+					t.Error(err)
+					continue
+				}
+				have := code.Eval(x, y)
+				code.Free()
+				if !equal(have, test.want) {
+					t.Errorf("%v with x=%v,y=%v: have %v, want: %v", test.expr, x, y, have, test.want)
+				}
+			}
 		}
 	}
-	}}
 }
 
-// equal returns whether x == y, treating NaN's as equal
-func equal(x, y float64)bool{
-	if math.IsNaN(x) && math.IsNaN(y){
+// equal returns whether x and y are approximately equal
+func equal(x, y float64) bool {
+	if math.IsNaN(x) && math.IsNaN(y) {
 		return true
 	}
-	return x == y
+	if x == y {
+		return true
+	}
+	return math.Abs((x-y)/(x+y)) < 1e-15
 }
 
 func BenchmarkJIT(b *testing.B) {
