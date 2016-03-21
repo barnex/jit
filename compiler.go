@@ -47,10 +47,12 @@ func Compile(expr string) (c *Code, e error) {
 
 	var b buf
 	b.emit(push_rbp, mov_rsp_rbp) // function preamble
-	//b.emit(sub_rbp(16))
+	b.emit(sub_rsp(24))
+	b.emit(mov_xmm0_rax, mov_rax_x_rsp(-8))
+	b.emit(mov_xmm1_rax, mov_rax_x_rsp(-16))
 	b.emitExpr(root)              // function body (jit code)
 	b.emit(pop_rax, mov_rax_xmm0) // result from stack returned via xmm0
-	//b.emit(add_rbp(16))
+	b.emit(add_rsp(24))
 	b.emit(pop_rbp, ret) // return from function
 
 	b.dump("b.out")
@@ -145,8 +147,10 @@ func (b *buf) emitIdent(e *ast.Ident) {
 		panic(err(e.Pos(), "undefined variable:", e.Name))
 	case "x":
 		b.emit(mov_xmm0_rax, push_rax)
+		//b.emit(mov_x_rsp_rax(-8), push_rax)
 	case "y":
 		b.emit(mov_xmm1_rax, push_rax)
+		//b.emit(mov_x_rsp_rax(-16), push_rax)
 	}
 }
 

@@ -40,24 +40,24 @@ func mov_imm_rax(x []byte) []byte {
 	return append([]byte{0x48, 0xb8}, x...)
 }
 
-// returns code for subq $x,%rbp
-func sub_rbp(x uint32) []byte {
-	return append([]byte{0x48, 0x81, 0xed}, uint32Bytes(x)...)
+// returns code for subq $x,%rsp
+func sub_rsp(x uint32) []byte {
+	return append([]byte{0x48, 0x81, 0xec}, uint32Bytes(x)...)
 }
 
-// returns code for addq $x,%rbp
-func add_rbp(x uint32) []byte {
-	return append([]byte{0x48, 0x81, 0xc5}, uint32Bytes(x)...)
+// returns code for addq $x,%rsp
+func add_rsp(x uint32) []byte {
+	return append([]byte{0x48, 0x81, 0xc4}, uint32Bytes(x)...)
 }
 
-// returns code for movq x(%rbp),%rax
-func mov_x_rbp_rax(x int32) []byte {
-	return append([]byte{0x48, 0x8b, 0x85}, int32Bytes(x)...)
+// returns code for movq x(%rsp),%rax
+func mov_x_rsp_rax(x int32) []byte {
+	return append([]byte{0x48, 0x8b, 0x84, 0x24}, int32Bytes(x)...)
 }
 
-// returns code for movq %rax,x(%rbp)
-func mov_rax_x_rbp(x int32) []byte {
-	return append([]byte{0x48, 0x89, 0x85}, int32Bytes(x)...)
+// returns code for movq %rax,x(%rsp)
+func mov_rax_x_rsp(x int32) []byte {
+	return append([]byte{0x48, 0x89, 0x84, 0x24}, int32Bytes(x)...)
 }
 
 func uint32Bytes(x uint32) []byte {
