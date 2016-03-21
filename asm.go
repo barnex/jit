@@ -25,22 +25,23 @@ var (
 	call_rax      = []byte{0xff, 0xd0}
 )
 
-// mov_imm_rax returns machine code for loading an immediate value in register rax.
-// 	movq $x, %rax
+// generates code for movq $x, %rax
 func mov_float_rax(x float64) []byte {
 	imm := *((*[8]byte)(unsafe.Pointer(&x)))
 	return mov_imm_rax(imm)
 }
 
+// generates code for movq $x, %rax
 func mov_uint_rax(x uintptr) []byte {
 	imm := *((*[8]byte)(unsafe.Pointer(&x)))
 	return mov_imm_rax(imm)
 }
 
+// generates code for movq $x, %rax
 func mov_imm_rax(x [8]byte) []byte {
 	return append([]byte{0x48, 0xb8}, x[:]...)
 }
 
-func call_imm(a uint32) []byte {
-	return append([]byte{0xff, 0x15}, (*((*[4]byte)(unsafe.Pointer(&a))))[:]...)
-}
+//func call_imm(a uint32) []byte {
+//	return append([]byte{0xff, 0x15}, (*((*[4]byte)(unsafe.Pointer(&a))))[:]...)
+//}
