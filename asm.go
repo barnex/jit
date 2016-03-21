@@ -51,13 +51,13 @@ func add_rsp(x uint32) []byte {
 }
 
 // returns code for movq x(%rsp),%rax
-func mov_x_rsp_rax(x int32) []byte {
-	return append([]byte{0x48, 0x8b, 0x84, 0x24}, int32Bytes(x)...)
+func mov_x_rbp_rax(x int32) []byte {
+	return append([]byte{0x48, 0x8b, 0x85}, int32Bytes(x)...)
 }
 
 // returns code for movq %rax,x(%rsp)
-func mov_rax_x_rsp(x int32) []byte {
-	return append([]byte{0x48, 0x89, 0x84, 0x24}, int32Bytes(x)...)
+func mov_rax_x_rbp(x int32) []byte {
+	return append([]byte{0x48, 0x89, 0x85}, int32Bytes(x)...)
 }
 
 func uint32Bytes(x uint32) []byte {
