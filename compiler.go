@@ -47,8 +47,10 @@ func Compile(expr string) (c *Code, e error) {
 
 	var b buf
 	b.emit(push_rbp, mov_rsp_rbp) // function preamble
+	b.emit(sub_rbp(8))
 	b.emitExpr(root)              // function body (jit code)
 	b.emit(pop_rax, mov_rax_xmm0) // result from stack returned via xmm0
+	b.emit(add_rbp(8))
 	b.emit(pop_rbp, ret)          // return from function
 
 	b.dump("b.out")

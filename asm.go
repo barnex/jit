@@ -25,23 +25,53 @@ var (
 	call_rax      = []byte{0xff, 0xd0}
 )
 
-// generates code for movq $x, %rax
+// returns code for movq $x,%rax
 func mov_float_rax(x float64) []byte {
-	imm := *((*[8]byte)(unsafe.Pointer(&x)))
-	return mov_imm_rax(imm)
+	return mov_imm_rax(float64Bytes(x))
 }
 
-// generates code for movq $x, %rax
+// returns code for movq $x,%rax
 func mov_uint_rax(x uintptr) []byte {
-	imm := *((*[8]byte)(unsafe.Pointer(&x)))
-	return mov_imm_rax(imm)
+	return mov_imm_rax(uintptrBytes(x))
 }
 
-// generates code for movq $x, %rax
-func mov_imm_rax(x [8]byte) []byte {
-	return append([]byte{0x48, 0xb8}, x[:]...)
+// returns code for movq $x,%rax
+func mov_imm_rax(x []byte) []byte {
+	return append([]byte{0x48, 0xb8}, x...)
 }
 
-//func call_imm(a uint32) []byte {
-//	return append([]byte{0xff, 0x15}, (*((*[4]byte)(unsafe.Pointer(&a))))[:]...)
-//}
+// returns code for subq $x,%rbp
+func sub_rbp(x uint32) []byte {
+	return append([]byte{0x48, 0x81, 0xed}, uint32Bytes(x)...)
+}
+
+// returns code for addq $x,%rbp
+func add_rbp(x uint32) []byte {
+	return append([]byte{0x48, 0x81, 0xc5}, uint32Bytes(x)...)
+}
+
+// returns code for movq x(%rbp),%rax
+func mov_x_rbp_rax(x int32)[]byte{
+	return append([]byte{0x48 ,0x8b ,0x85}, int32Bytes(x)...)
+}
+
+// returns code for movq %rax,x(%rbp)
+func mov_rax_x_rbp(x int32)[]byte{
+	return append([]byte{0x48 ,0x89 ,0x85}, int32Bytes(x)...)
+}
+
+func uint32Bytes(x uint32) []byte {
+	return (*((*[4]byte)(unsafe.Pointer(&x))))[:]
+}
+
+func int32Bytes(x int32) []byte {
+	return (*((*[4]byte)(unsafe.Pointer(&x))))[:]
+}
+
+func uintptrBytes(x uintptr) []byte {
+	return (*((*[8]byte)(unsafe.Pointer(&x))))[:]
+}
+
+func float64Bytes(x float64) []byte{
+	return (*((*[8]byte)(unsafe.Pointer(&x))))[:]
+}
