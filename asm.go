@@ -51,13 +51,13 @@ func add_rbp(x uint32) []byte {
 }
 
 // returns code for movq x(%rbp),%rax
-func mov_x_rbp_rax(x int32)[]byte{
-	return append([]byte{0x48 ,0x8b ,0x85}, int32Bytes(x)...)
+func mov_x_rbp_rax(x int32) []byte {
+	return append([]byte{0x48, 0x8b, 0x85}, int32Bytes(x)...)
 }
 
 // returns code for movq %rax,x(%rbp)
-func mov_rax_x_rbp(x int32)[]byte{
-	return append([]byte{0x48 ,0x89 ,0x85}, int32Bytes(x)...)
+func mov_rax_x_rbp(x int32) []byte {
+	return append([]byte{0x48, 0x89, 0x85}, int32Bytes(x)...)
 }
 
 func uint32Bytes(x uint32) []byte {
@@ -72,6 +72,6 @@ func uintptrBytes(x uintptr) []byte {
 	return (*((*[8]byte)(unsafe.Pointer(&x))))[:]
 }
 
-func float64Bytes(x float64) []byte{
+func float64Bytes(x float64) []byte {
 	return (*((*[8]byte)(unsafe.Pointer(&x))))[:]
 }
