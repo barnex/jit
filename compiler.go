@@ -146,11 +146,9 @@ func (b *buf) emitIdent(e *ast.Ident) {
 	default:
 		panic(err(e.Pos(), "undefined variable:", e.Name))
 	case "x":
-		b.emit(mov_xmm0_rax, push_rax)
-		//b.emit(mov_x_rbp_rax(-8), push_rax)
+		b.emit(mov_x_rbp_rax(-8), push_rax)
 	case "y":
-		b.emit(mov_xmm1_rax, push_rax)
-		//b.emit(mov_x_rbp_rax(-16), push_rax)
+		b.emit(mov_x_rbp_rax(-16), push_rax)
 	}
 }
 
