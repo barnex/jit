@@ -60,6 +60,15 @@ func mov_rax_x_rbp(x int32) []byte {
 	return append([]byte{0x48, 0x89, 0x85}, int32Bytes(x)...)
 }
 
+// returns code for movq %r1,%r2
+func mov_xmm(r1, r2 int) []byte {
+	if r1 > 7 || r2 > 7 {
+		panic("mov_xmm: bad register")
+	}
+	regs := byte(0xc0) | byte(r2)<<3 | byte(r1)
+	return []byte{0xf3, 0x0f, 0x7e, regs}
+}
+
 func uint32Bytes(x uint32) []byte {
 	return (*((*[4]byte)(unsafe.Pointer(&x))))[:]
 }
