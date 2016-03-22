@@ -46,14 +46,14 @@ func Compile(expr string) (c *Code, e error) {
 	}()
 
 	var b buf
-	b.emit(push_rbp, mov_rsp_rbp) // function preamble
-	b.emit(sub_rsp(24))
-	b.emit(mov_xmm0_rax, mov_rax_x_rbp(-8))
-	b.emit(mov_xmm1_rax, mov_rax_x_rbp(-16))
-	b.emitExpr(root)              // function body (jit code)
-	b.emit(pop_rax, mov_rax_xmm0) // result from stack returned via xmm0
-	b.emit(add_rsp(24))
-	b.emit(pop_rbp, ret) // return from function
+	b.emit(push_rbp, mov_rsp_rbp)            // function preamble
+	b.emit(sub_rsp(16))                      // stack space for x, y
+	b.emit(mov_xmm0_rax, mov_rax_x_rbp(-8))  // x on stack
+	b.emit(mov_xmm1_rax, mov_rax_x_rbp(-16)) // y on stack
+	b.emitExpr(root)                         // function body (jit code)
+	b.emit(pop_rax, mov_rax_xmm0)            // result from stack returned via xmm0
+	b.emit(add_rsp(16))                      // free stack space for x,y
+	b.emit(pop_rbp, ret)                     // return from function
 
 	b.dump("b.out")
 
