@@ -28,6 +28,11 @@ type Code struct {
 	instr []byte
 }
 
+// buf accumulates machine code.
+type buf struct{
+		bytes.Buffer
+}
+
 // Compile compiles an arithmetic expression, which may contain the variables x and y. E.g.:
 // 	(x+1) * (y-2)
 // If no longer needed, the returned code must be explicitly freed with Free().
@@ -57,7 +62,7 @@ func Compile(expr string) (c *Code, e error) {
 
 	b.dump("b.out")
 
-	instr, err := makeExecutable(((*bytes.Buffer)(&b)).Bytes())
+	instr, err := makeExecutable(b.Bytes())
 	if err != nil {
 		return nil, err
 	}
@@ -70,7 +75,7 @@ func (b *buf) dump(fname string) {
 		panic(err)
 	}
 	defer f.Close()
-	f.Write(((*bytes.Buffer)(b)).Bytes())
+	f.Write(b.Bytes())
 }
 
 // Eval executes the code, passing values for the variables x and y,
@@ -85,13 +90,11 @@ func (c *Code) Free() {
 	c.instr = nil
 }
 
-// buf accumulates machine code.
-type buf bytes.Buffer
 
 // emit writes machine code to the buffer.
 func (b *buf) emit(ops ...[]byte) {
 	for _, op := range ops {
-		((*bytes.Buffer)(b)).Write(op)
+		b.Write(op)
 	}
 }
 
