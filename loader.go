@@ -19,6 +19,9 @@ import (
 //
 //double run(void *code, double x, double y) {
 //  double (*func)(double, double) = code;
+//  for(int i=0; i<999; i++){
+//  	func(x, y);
+//  }
 //  return func(x, y);
 //}
 import "C"
