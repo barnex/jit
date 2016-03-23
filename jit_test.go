@@ -70,7 +70,7 @@ func BenchmarkJIT(b *testing.B) {
 		b.Fatal(err)
 	}
 	b.ResetTimer()
-	n := b.N/1000// loader does 1000 loops
+	n := b.N / 1000 // loader does 1000 loops
 	for i := 0; i < n; i++ {
 		code.Eval(2, 3)
 	}
