@@ -29,8 +29,13 @@ type Code struct {
 }
 
 // buf accumulates machine code.
-type buf struct{
-		bytes.Buffer
+type buf struct {
+	bytes.Buffer
+	freeReg [8]bool
+}
+
+func (b *buf) getFreeReg() int {
+	return -1
 }
 
 // Compile compiles an arithmetic expression, which may contain the variables x and y. E.g.:
@@ -89,7 +94,6 @@ func (c *Code) Free() {
 	unix.Munmap(c.instr)
 	c.instr = nil
 }
-
 
 // emit writes machine code to the buffer.
 func (b *buf) emit(ops ...[]byte) {
@@ -164,23 +168,23 @@ func (b *buf) emitBasicLit(e *ast.BasicLit) {
 func (b *buf) emitBinaryExpr(n *ast.BinaryExpr) {
 	b.emitExpr(n.X)
 	b.emitExpr(n.Y)
-	b.emit(pop_rax, mov_rax_xmm3) // get right operand
-	b.emit(pop_rax, mov_rax_xmm2) // get left operand
+	b.emit(pop_rax, mov_rax_xmm1) // get right operand
+	b.emit(pop_rax, mov_rax_xmm0) // get left operand
 
 	switch n.Op {
 	default:
 		panic(err(n.Pos(), "syntax error:", n.Op))
 	case token.ADD:
-		b.emit(add_xmm3_xmm2)
+		b.emit(add_xmm1_xmm0)
 	case token.SUB:
-		b.emit(sub_xmm3_xmm2)
+		b.emit(sub_xmm1_xmm0)
 	case token.MUL:
-		b.emit(mul_xmm3_xmm2)
+		b.emit(mul_xmm1_xmm0)
 	case token.QUO:
-		b.emit(div_xmm3_xmm2)
+		b.emit(div_xmm1_xmm0)
 	}
 
-	b.emit(mov_xmm2_rax, push_rax)
+	b.emit(mov_xmm0_rax, push_rax)
 }
 
 func typ(x interface{}) reflect.Type {
