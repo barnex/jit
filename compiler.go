@@ -19,14 +19,7 @@ import (
 	"os"
 	"reflect"
 	"strconv"
-
-	"golang.org/x/sys/unix"
 )
-
-// Code stores JIT compiled machine code and allows to evaluate it.
-type Code struct {
-	instr []byte
-}
 
 // buf accumulates machine code.
 type buf struct {
@@ -61,7 +54,6 @@ func Compile(expr string) (c *Code, e error) {
 	b.emit(mov_xmm0_rax, mov_rax_x_rbp(-8))  // x on stack
 	b.emit(mov_xmm1_rax, mov_rax_x_rbp(-16)) // y on stack
 	b.emitExpr(root)                         // function body (jit code)
-	b.emit(pop_rax, mov_rax_xmm0)            // result from stack returned via xmm0
 	b.emit(add_rsp(16))                      // free stack space for x,y
 	b.emit(pop_rbp, ret)                     // return from function
 
@@ -72,27 +64,6 @@ func Compile(expr string) (c *Code, e error) {
 		return nil, err
 	}
 	return &Code{instr}, nil
-}
-
-func (b *buf) dump(fname string) {
-	f, err := os.Create(fname)
-	if err != nil {
-		panic(err)
-	}
-	defer f.Close()
-	f.Write(b.Bytes())
-}
-
-// Eval executes the code, passing values for the variables x and y,
-// and returns the result.
-func (c *Code) Eval(x, y float64) float64 {
-	return call(c.instr, x, y)
-}
-
-// Free unmaps the code, after which Eval cannot be called anymore.
-func (c *Code) Free() {
-	unix.Munmap(c.instr)
-	c.instr = nil
 }
 
 // emit writes machine code to the buffer.
@@ -133,9 +104,7 @@ func (b *buf) emitCall(e *ast.CallExpr) {
 		panic(err(e.Pos(), "need one argument"))
 	}
 	b.emitExpr(e.Args[0])
-	b.emit(pop_rax, mov_rax_xmm0)
 	b.emit(mov_uint_rax(fptr), call_rax)
-	b.emit(mov_xmm0_rax, push_rax)
 }
 
 // emitIdent compiles an identifier (x or y) and stores the machine code.
@@ -144,9 +113,9 @@ func (b *buf) emitIdent(e *ast.Ident) {
 	default:
 		panic(err(e.Pos(), "undefined variable:", e.Name))
 	case "x":
-		b.emit(mov_x_rbp_rax(-8), push_rax)
+		b.emit(mov_x_rbp_rax(-8), mov_rax_xmm0)
 	case "y":
-		b.emit(mov_x_rbp_rax(-16), push_rax)
+		b.emit(mov_x_rbp_rax(-16), mov_rax_xmm0)
 	}
 }
 
@@ -160,16 +129,16 @@ func (b *buf) emitBasicLit(e *ast.BasicLit) {
 		if err != nil {
 			panic(err)
 		}
-		b.emit(mov_float_rax(v), push_rax)
+		b.emit(mov_float_rax(v), mov_rax_xmm0)
 	}
 }
 
 // emitBinaryExpr compiles a binary expression, e.g. x+1, and stores the machine code.
 func (b *buf) emitBinaryExpr(n *ast.BinaryExpr) {
-	b.emitExpr(n.X)
-	b.emitExpr(n.Y)
-	b.emit(pop_rax, mov_rax_xmm1) // get right operand
-	b.emit(pop_rax, mov_rax_xmm0) // get left operand
+	b.emitExpr(n.Y) // y in xmm0
+	b.emit(mov_xmm0_rax, push_rax) // push y
+	b.emitExpr(n.X) // x in xmm0
+	b.emit(pop_rax, mov_rax_xmm1) // x in xmm1
 
 	switch n.Op {
 	default:
@@ -184,7 +153,7 @@ func (b *buf) emitBinaryExpr(n *ast.BinaryExpr) {
 		b.emit(div_xmm1_xmm0)
 	}
 
-	b.emit(mov_xmm0_rax, push_rax)
+	// result in xmm0
 }
 
 func typ(x interface{}) reflect.Type {
@@ -193,3 +162,14 @@ func typ(x interface{}) reflect.Type {
 func err(pos token.Pos, msg ...interface{}) error {
 	return fmt.Errorf("%v: %v", pos, fmt.Sprintln(msg...))
 }
+
+func (b *buf) dump(fname string) {
+	f, err := os.Create(fname)
+	if err != nil {
+		panic(err)
+	}
+	defer f.Close()
+	f.Write(b.Bytes())
+}
+
+

@@ -55,3 +55,21 @@ func makeExecutable(code []byte) ([]byte, error) {
 func call(code []byte, x, y float64) float64 {
 	return float64(C.run(unsafe.Pointer(&code[0]), C.double(x), C.double(y)))
 }
+
+// Code stores JIT compiled machine code and allows to evaluate it.
+type Code struct {
+	instr []byte
+}
+
+// Eval executes the code, passing values for the variables x and y,
+// and returns the result.
+func (c *Code) Eval(x, y float64) float64 {
+	return call(c.instr, x, y)
+}
+
+// Free unmaps the code, after which Eval cannot be called anymore.
+func (c *Code) Free() {
+	unix.Munmap(c.instr)
+	c.instr = nil
+}
+
