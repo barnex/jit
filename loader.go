@@ -75,4 +75,3 @@ func (c *Code) Free() {
 	unix.Munmap(c.instr)
 	c.instr = nil
 }
-
