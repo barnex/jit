@@ -26,6 +26,7 @@ func mov_float_rax(x float64) []byte {
 	return mov_imm_rax(float64Bytes(x))
 }
 
+
 // returns code for movq $x,%rax
 func mov_uint_rax(x uintptr) []byte {
 	return mov_imm_rax(uintptrBytes(x))
@@ -51,9 +52,19 @@ func mov_x_rbp_rax(x int32) []byte {
 	return append([]byte{0x48, 0x8b, 0x85}, int32Bytes(x)...)
 }
 
-// returns code for movq %rax,x(%rsp)
+// returns code for movq %rax,x(%rbp)
 func mov_rax_x_rbp(x int32) []byte {
 	return append([]byte{0x48, 0x89, 0x85}, int32Bytes(x)...)
+}
+
+// returns code for movq %xmm0,x(%rbp)
+func mov_xmm0_x_rbp(x int32) []byte{
+	return append([]byte{0x66 ,0x0f ,0xd6 ,0x85}, int32Bytes(x)...)
+}
+
+// returns code for movq x(%rbp),%xmm0
+func mov_x_rbp_xmm0(x int32) []byte{
+	return append([]byte{0xf3 ,0x0f ,0x7e ,0x85}, int32Bytes(x)...)
 }
 
 // returns code for movq %r1,%r2

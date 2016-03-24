@@ -18,11 +18,12 @@ import (
 //void* func_cos  = cos;
 //
 //double run(void *code, double x, double y) {
-//  double (*func)(double, double) = code;
-//  for(int i=0; i<999; i++){
-//  	func(x, y);
-//  }
-//  return func(x, y);
+//	double (*func)(double, double) = code;
+//	int i;
+//	for(i=0; i<999; i++){
+//		func(x, y);
+//	}
+//	return func(x, y);
 //}
 import "C"
 
