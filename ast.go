@@ -2,17 +2,29 @@ package jit
 
 type expr interface {
 	compile(b *buf)
-	walkChildren(func(expr))
+	children() []expr
 }
 
 func walk(root expr, f func(expr)) {
+	for _, c := range root.children(){
+		walk(c, f)	
+	}	
 	f(root)
-	root.walkChildren(f)
 }
+
+//func findCalls(root expr) map[expr]bool{
+//	m := make(map[expr]	bool)
+//	walk(root, func(e expr)){
+//		if _, ok := e.(*callexpr); ok{
+//			m[e] = true
+//		}
+//
+//	}
+//}
 
 type leaf struct{}
 
-func (_ leaf) walkChildren(func(expr)) {}
+func (_ leaf) children()[]expr {return nil}
 
 type variable struct {
 	leaf
@@ -26,9 +38,8 @@ type constant struct {
 
 type binexpr struct{ x, y expr }
 
-func (e *binexpr) walkChildren(f func(expr)) {
-	walk(e.x, f)
-	walk(e.y, f)
+func (e *binexpr) children()[]expr {
+		return []expr{e.x, e.y}
 }
 
 type add struct{ binexpr }
@@ -41,8 +52,10 @@ type callexpr struct {
 	args []expr
 }
 
-func (e *callexpr) walkChildren(f func(expr)) {
+func (e *callexpr) children()[]expr{
+	var c []expr
 	for _, a := range e.args {
-		walk(a, f)
+		c = append(c, a)
 	}
+	return c
 }
