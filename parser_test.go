@@ -48,3 +48,34 @@ func TestWalk(t *testing.T) {
 		}
 	}
 }
+
+func TestRecordCalls(t *testing.T){
+	tests := []struct {
+		expr string
+		want bool
+	}{
+		{"x", false},
+		{"x+y", false},
+		{"(x+y)", false},
+		{"sin(x-y)", true},
+		{"sin(cos(x)*cos(y))", true},
+		{"sin(cos(x)/cos(y))", true},
+		{"1+sin(x)", true},
+		{"1+(2*sin(x))", true},
+		{"+x", false},
+		{"-x", false}, // 0 - x
+	}
+
+	for _, test := range tests {
+		root, err := Parse(test.expr)
+		if err != nil {
+			t.Error(err)
+			continue
+		}
+		m := make(map[expr]bool)
+		recordCalls(root, m)
+		if m[root] != test.want {
+			t.Errorf("has calls %q: have %v, want %v", test.expr, m[root], test.want)
+		}
+	}
+}
