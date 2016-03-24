@@ -29,14 +29,14 @@ type buf struct {
 }
 
 func (b *buf) allocReg() int {
-	for i:=2; i<len(b.usedReg); i++{
-		if !b.usedReg[i]{
-				b.usedReg[i]=true
-				b.nRegistersHit++
-				fmt.Println("alloc register", i)
-				return i
-		}
-	}
+	//for i:=2; i<len(b.usedReg); i++{
+	//	if !b.usedReg[i]{
+	//			b.usedReg[i]=true
+	//			b.nRegistersHit++
+	//			fmt.Println("alloc register", i)
+	//			return i
+	//	}
+	//}
 	b.nStackSpill++
 	return -1
 }
