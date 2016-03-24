@@ -188,10 +188,13 @@ func parseIdent(node *ast.Ident) expr {
 	}
 }
 
-func parseUnaryExpr(node *ast.UnaryExpr)expr{
-	switch node.Op{
-			default: panic(fmt.Sprintf("syntax error: %v", node.Op))	
-	case token.ADD: return parseExpr(node.X)
-	case token.SUB: return &sub{binexpr{&constant{0}, parseExpr(node.X)}}
+func parseUnaryExpr(node *ast.UnaryExpr) expr {
+	switch node.Op {
+	default:
+		panic(fmt.Sprintf("syntax error: %v", node.Op))
+	case token.ADD:
+		return parseExpr(node.X)
+	case token.SUB:
+		return &sub{binexpr{&constant{0}, parseExpr(node.X)}}
 	}
 }
