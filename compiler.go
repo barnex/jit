@@ -16,6 +16,74 @@ import (
 	"os"
 )
 
+func (e *variable) compile(b *buf) {
+	switch e.name {
+	default:
+		panic("undefined variable:" + e.name)
+	case "x":
+		b.emit(mov_x_rbp_rax(-8), mov_rax_xmm0)
+	case "y":
+		b.emit(mov_x_rbp_rax(-16), mov_rax_xmm0)
+	}
+}
+
+func (e *constant) compile(b *buf) {
+	b.emit(mov_float_rax(e.value), mov_rax_xmm0)
+}
+
+func (e *binexpr) compileArgs(b *buf) {
+	e.y.compile(b) // y in xmm0
+
+	// stash result
+	reg := b.allocReg()
+	if reg == -1 {
+		b.emit(mov_xmm0_rax, push_rax)
+	} else {
+		b.emit(mov_xmm(0, reg))
+	}
+
+	e.x.compile(b) // x in xmm0
+	if reg == -1 {
+		b.emit(pop_rax, mov_rax_xmm1) // x in xmm1
+	} else {
+		b.emit(mov_xmm(reg, 1))
+	}
+	b.freeReg(reg)
+}
+
+func (e *add) compile(b *buf) {
+	e.compileArgs(b)
+	b.emit(add_xmm1_xmm0)
+}
+
+func (e *sub) compile(b *buf) {
+	e.compileArgs(b)
+	b.emit(sub_xmm1_xmm0)
+}
+
+func (e *quo) compile(b *buf) {
+	e.compileArgs(b)
+	b.emit(div_xmm1_xmm0)
+}
+
+func (e *mul) compile(b *buf) {
+	e.compileArgs(b)
+	b.emit(mul_xmm1_xmm0)
+}
+
+func (e *callexpr) compile(b *buf) {
+	if len(e.args) != 1 {
+		panic(fmt.Sprintf("%v arguments not supported", len(e.args)))
+	}
+	fptr := funcs[e.fun]
+	if fptr == 0 {
+		panic(fmt.Sprintf("undefined:", e.fun))
+	}
+
+	e.args[0].compile(b)
+	b.emit(mov_uint_rax(fptr), call_rax)
+}
+
 // buf accumulates machine code.
 type buf struct {
 	bytes.Buffer
