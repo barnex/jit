@@ -6,25 +6,29 @@ type expr interface {
 }
 
 func walk(root expr, f func(expr)) {
-	for _, c := range root.children(){
-		walk(c, f)	
-	}	
+	for _, c := range root.children() {
+		walk(c, f)
+	}
 	f(root)
 }
 
-//func findCalls(root expr) map[expr]bool{
-//	m := make(map[expr]	bool)
-//	walk(root, func(e expr)){
-//		if _, ok := e.(*callexpr); ok{
-//			m[e] = true
-//		}
-//
-//	}
-//}
+func recordCalls(root expr, m map[expr]bool){
+	walk(root, func(e expr){
+		for _, c := range root.children(){
+			recordCalls(c, m)
+			if m[c]{
+				m[root]	= true
+			}
+		}
+		if _, ok := e.(*callexpr); ok{
+			m[root] = true
+		}
+	})
+}
 
 type leaf struct{}
 
-func (_ leaf) children()[]expr {return nil}
+func (_ leaf) children() []expr { return nil }
 
 type variable struct {
 	leaf
@@ -38,8 +42,8 @@ type constant struct {
 
 type binexpr struct{ x, y expr }
 
-func (e *binexpr) children()[]expr {
-		return []expr{e.x, e.y}
+func (e *binexpr) children() []expr {
+	return []expr{e.x, e.y}
 }
 
 type add struct{ binexpr }
@@ -52,7 +56,7 @@ type callexpr struct {
 	args []expr
 }
 
-func (e *callexpr) children()[]expr{
+func (e *callexpr) children() []expr {
 	var c []expr
 	for _, a := range e.args {
 		c = append(c, a)
