@@ -18,6 +18,7 @@ func TestJIT(t *testing.T) {
 			}{
 				{"x", x},
 				{"y", y},
+				{"-x", -x},
 				{"x+y", x + y},
 				{"2+x+y+1", 2 + x + y + 1},
 				{"1", 1},
