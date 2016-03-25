@@ -48,8 +48,9 @@ func (e *binexpr) compileArgs(b *buf) {
 	}
 
 	e.x.compile(b) // x in xmm0
+
 	if reg == -1 {
-		b.emit(pop_rax, mov_rax_xmm1) // x in xmm1
+		b.emit(pop_rax, mov_rax_xmm1) // y in xmm1
 	} else {
 		b.emit(mov_xmm(reg, 1))
 	}
