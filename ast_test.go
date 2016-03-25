@@ -67,7 +67,8 @@ func TestRecordCalls(t *testing.T) {
 		{"1+(2*sin(x))", true},
 		{"1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1", false},
 		{"+x", false},
-		{"-x", false}, // 0 - x
+		{"-x", false},
+		{"1+2+(3+2*4+((((5+6*2)+7)+sqrt(8))+9)+10*sin(2-x+y/3))+11", true},
 	}
 
 	for _, test := range tests {

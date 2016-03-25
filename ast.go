@@ -18,15 +18,16 @@ func walk(root expr, f func(expr)) {
 }
 
 func recordCalls(root expr, m map[expr]bool) {
-		for _, c := range root.children() {
-			recordCalls(c, m)
-			if m[c] {
-				m[root] = true
-			}
-		}
-		if _, ok := root.(*callexpr); ok {
+	for _, c := range root.children() {
+		recordCalls(c, m)
+		if m[c] {
 			m[root] = true
 		}
+	}
+	if _, ok := root.(*callexpr); ok {
+		m[root] = true
+	}
+	//fmt.Println("recordCalls", root, m[root])
 }
 
 type leaf struct{}
@@ -57,10 +58,10 @@ func (e *binexpr) children() []expr {
 	return []expr{e.x, e.y}
 }
 
-func (e*add)String()string{ return fmt.Sprintf("(%v+%v)", e.x, e.y) }
-func (e*sub)String()string{ return fmt.Sprintf("(%v-%v)", e.x, e.y) }
-func (e*mul)String()string{ return fmt.Sprintf("(%v*%v)", e.x, e.y) }
-func (e*quo)String()string{ return fmt.Sprintf("(%v/%v)", e.x, e.y) }
+func (e *add) String() string { return fmt.Sprintf("(%v+%v)", e.x, e.y) }
+func (e *sub) String() string { return fmt.Sprintf("(%v-%v)", e.x, e.y) }
+func (e *mul) String() string { return fmt.Sprintf("(%v*%v)", e.x, e.y) }
+func (e *quo) String() string { return fmt.Sprintf("(%v/%v)", e.x, e.y) }
 
 type add struct{ binexpr }
 type sub struct{ binexpr }
