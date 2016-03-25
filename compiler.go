@@ -32,16 +32,33 @@ func (e *constant) compile(b *buf) {
 }
 
 func (e *binexpr) compileArgs(b *buf) {
-	e.y.compile(b) // y in xmm0
+	// Determine which side of the binary expression to evaluate first:
+	//  * prefer deeper branch first, so we use least registers
+	//  * however, avoid function calls in the second branch,
+	// 	  as those destroy the registers.
+	var first, second expr
+	if b.callDepth[e.x] > b.callDepth[e.y] && !b.hasCall[e.y] {
+		first, second = e.x, e.y
+	} else {
+		first, second = e.y, e.x
+	}
 
-	stash := b.stash(b.hasCall[e.x])
+	first.compile(b)
+	stash := b.stash(b.hasCall[second])
+	second.compile(b)
 
-	e.x.compile(b) // x in xmm0
-
-	b.unstash(stash)
+	// Move the results back:
+	// y -> xmm0
+	// x -> xmm1
+	if first == e.y {
+		b.unstash(stash, 1)
+	} else {
+		b.emit(mov_xmm(0, 1))
+		b.unstash(stash, 0)
+	}
 }
 
-func(b*buf)stash(destroyRegs bool)int{
+func (b *buf) stash(destroyRegs bool) int {
 	// stash result
 	reg := -1
 	if !destroyRegs {
@@ -57,11 +74,11 @@ func(b*buf)stash(destroyRegs bool)int{
 	return reg
 }
 
-func(b*buf)unstash(reg int){
+func (b *buf) unstash(reg, dest int) {
 	if reg == -1 {
 		b.emit(pop_rax, mov_rax_xmm1) // y in xmm1
 	} else {
-		b.emit(mov_xmm(reg, 1))
+		b.emit(mov_xmm(reg, dest))
 	}
 	b.freeReg(reg)
 }
@@ -105,6 +122,7 @@ type buf struct {
 	usedReg                    [8]bool
 	nRegistersHit, nStackSpill int
 	hasCall                    map[expr]bool
+	callDepth                  map[expr]int
 }
 
 func (b *buf) allocReg() int {
@@ -138,8 +156,9 @@ func Compile(ex string) (c *Code, e error) {
 		return nil, err
 	}
 
-	b := buf{hasCall: make(map[expr]bool)}
+	b := buf{hasCall: make(map[expr]bool), callDepth: make(map[expr]int)}
 	recordCalls(root, b.hasCall)
+	recordDepth(root, b.callDepth)
 
 	b.emit(push_rbp, mov_rsp_rbp)            // function preamble
 	b.emit(sub_rsp(16))                      // stack space for x, y

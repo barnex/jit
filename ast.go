@@ -30,6 +30,20 @@ func recordCalls(root expr, m map[expr]bool) {
 	//fmt.Println("recordCalls", root, m[root])
 }
 
+func recordDepth(root expr, m map[expr]int) {
+	for _, c := range root.children() {
+		recordDepth(c, m)
+		if m[c] > m[root] {
+			m[root] = m[c]
+		}
+	}
+	switch root.(type) {
+	case *add, *sub, *mul, *quo:
+		m[root]++
+	}
+	//fmt.Println("callDepth", root, m[root])
+}
+
 type leaf struct{}
 
 func (_ leaf) children() []expr { return nil }
