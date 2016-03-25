@@ -38,6 +38,8 @@ func (e *binexpr) compileArgs(b *buf) {
 	reg := -1
 	if !b.hasCall[e.x] {
 		reg = b.allocReg()
+	} else {
+		b.nStackSpill++
 	}
 	if reg == -1 {
 		b.emit(mov_xmm0_rax, push_rax)
@@ -128,9 +130,6 @@ func Compile(ex string) (c *Code, e error) {
 
 	b := buf{hasCall: make(map[expr]bool)}
 	recordCalls(root, b.hasCall)
-	for k, v := range b.hasCall {
-		fmt.Println(k, "hasCall:", v)
-	}
 
 	b.emit(push_rbp, mov_rsp_rbp)            // function preamble
 	b.emit(sub_rsp(16))                      // stack space for x, y
@@ -141,7 +140,7 @@ func Compile(ex string) (c *Code, e error) {
 	b.emit(pop_rbp, ret)                     // return from function
 
 	b.dump("b.out")
-	//fmt.Println(ex, ":", b.nRegistersHit, "reg hits,", b.nStackSpill, "stack spills")
+	fmt.Println(ex, ":", b.nRegistersHit, "reg hits,", b.nStackSpill, "stack spills")
 
 	instr, err := makeExecutable(b.Bytes())
 	if err != nil {
