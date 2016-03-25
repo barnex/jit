@@ -1,8 +1,13 @@
 package jit
 
+import (
+	"fmt"
+)
+
 type expr interface {
 	compile(b *buf)
 	children() []expr
+	String() string
 }
 
 func walk(root expr, f func(expr)) {
@@ -12,15 +17,15 @@ func walk(root expr, f func(expr)) {
 	f(root)
 }
 
-func recordCalls(root expr, m map[expr]bool){
-	walk(root, func(e expr){
-		for _, c := range root.children(){
+func recordCalls(root expr, m map[expr]bool) {
+	walk(root, func(e expr) {
+		for _, c := range root.children() {
 			recordCalls(c, m)
-			if m[c]{
-				m[root]	= true
+			if m[c] {
+				m[root] = true
 			}
 		}
-		if _, ok := e.(*callexpr); ok{
+		if _, ok := e.(*callexpr); ok {
 			m[root] = true
 		}
 	})
@@ -35,9 +40,17 @@ type variable struct {
 	name string
 }
 
+func (e *variable) String() string {
+	return e.name
+}
+
 type constant struct {
 	leaf
 	value float64
+}
+
+func (e *constant) String() string {
+	return fmt.Sprint(e.value)
 }
 
 type binexpr struct{ x, y expr }
@@ -45,6 +58,11 @@ type binexpr struct{ x, y expr }
 func (e *binexpr) children() []expr {
 	return []expr{e.x, e.y}
 }
+
+func (e*add)String()string{ return fmt.Sprintf("(%v+%v)", e.x, e.y) }
+func (e*sub)String()string{ return fmt.Sprintf("(%v-%v)", e.x, e.y) }
+func (e*mul)String()string{ return fmt.Sprintf("(%v*%v)", e.x, e.y) }
+func (e*quo)String()string{ return fmt.Sprintf("(%v/%v)", e.x, e.y) }
 
 type add struct{ binexpr }
 type sub struct{ binexpr }
@@ -54,6 +72,10 @@ type quo struct{ binexpr }
 type callexpr struct {
 	fun  string
 	args []expr
+}
+
+func (e *callexpr) String() string {
+	return fmt.Sprintf("%v(%v)", e.fun, e.args[0])
 }
 
 func (e *callexpr) children() []expr {
