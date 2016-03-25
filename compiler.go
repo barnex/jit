@@ -34,9 +34,17 @@ func (e *constant) compile(b *buf) {
 func (e *binexpr) compileArgs(b *buf) {
 	e.y.compile(b) // y in xmm0
 
+	stash := b.stash(b.hasCall[e.x])
+
+	e.x.compile(b) // x in xmm0
+
+	b.unstash(stash)
+}
+
+func(b*buf)stash(destroyRegs bool)int{
 	// stash result
 	reg := -1
-	if !b.hasCall[e.x] {
+	if !destroyRegs {
 		reg = b.allocReg()
 	} else {
 		b.nStackSpill++
@@ -46,9 +54,10 @@ func (e *binexpr) compileArgs(b *buf) {
 	} else {
 		b.emit(mov_xmm(0, reg))
 	}
+	return reg
+}
 
-	e.x.compile(b) // x in xmm0
-
+func(b*buf)unstash(reg int){
 	if reg == -1 {
 		b.emit(pop_rax, mov_rax_xmm1) // y in xmm1
 	} else {
