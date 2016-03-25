@@ -18,17 +18,15 @@ func walk(root expr, f func(expr)) {
 }
 
 func recordCalls(root expr, m map[expr]bool) {
-	walk(root, func(e expr) {
 		for _, c := range root.children() {
 			recordCalls(c, m)
 			if m[c] {
 				m[root] = true
 			}
 		}
-		if _, ok := e.(*callexpr); ok {
+		if _, ok := root.(*callexpr); ok {
 			m[root] = true
 		}
-	})
 }
 
 type leaf struct{}
