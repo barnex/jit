@@ -49,7 +49,7 @@ func TestWalk(t *testing.T) {
 	}
 }
 
-func TestRecordCalls(t *testing.T){
+func TestRecordCalls(t *testing.T) {
 	tests := []struct {
 		expr string
 		want bool
@@ -60,7 +60,10 @@ func TestRecordCalls(t *testing.T){
 		{"sin(x-y)", true},
 		{"sin(cos(x)*cos(y))", true},
 		{"sin(cos(x)/cos(y))", true},
+		{"1+sin(cos(x)/cos(y))", true},
+		{"(1+sin(cos(x)/cos(y)))+1", true},
 		{"1+sin(x)", true},
+		{"1+(2*(sin(x)))", true},
 		{"1+(2*sin(x))", true},
 		{"+x", false},
 		{"-x", false}, // 0 - x

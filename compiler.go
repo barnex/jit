@@ -35,7 +35,10 @@ func (e *binexpr) compileArgs(b *buf) {
 	e.y.compile(b) // y in xmm0
 
 	// stash result
-	reg := b.allocReg()
+	reg := -1
+	if !b.hasCall[e.y] {
+		reg = b.allocReg()
+	}
 	if reg == -1 {
 		b.emit(mov_xmm0_rax, push_rax)
 	} else {
@@ -89,6 +92,7 @@ type buf struct {
 	bytes.Buffer
 	usedReg                    [8]bool
 	nRegistersHit, nStackSpill int
+	hasCall                    map[expr]bool
 }
 
 func (b *buf) allocReg() int {
@@ -117,13 +121,17 @@ func (b *buf) freeReg(reg int) {
 // Compile compiles an arithmetic expression, which may contain the variables x and y. E.g.:
 // 	(x+1) * (y-2)
 // If no longer needed, the returned code must be explicitly freed with Free().
-func Compile(expr string) (c *Code, e error) {
-	root, err := Parse(expr)
+func Compile(ex string) (c *Code, e error) {
+	root, err := Parse(ex)
 	if err != nil {
 		return nil, err
 	}
 
-	var b buf
+	b := buf{hasCall: make(map[expr]bool)}
+	fmt.Println("record calls", ex)
+	recordCalls(root, b.hasCall)
+	fmt.Println("record done")
+
 	b.emit(push_rbp, mov_rsp_rbp)            // function preamble
 	b.emit(sub_rsp(16))                      // stack space for x, y
 	b.emit(mov_xmm0_rax, mov_rax_x_rbp(-8))  // x on stack
