@@ -65,6 +65,7 @@ func TestRecordCalls(t *testing.T) {
 		{"1+sin(x)", true},
 		{"1+(2*(sin(x)))", true},
 		{"1+(2*sin(x))", true},
+		{"1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1", false},
 		{"+x", false},
 		{"-x", false}, // 0 - x
 	}
