@@ -96,14 +96,13 @@ type buf struct {
 }
 
 func (b *buf) allocReg() int {
-	//for i:=2; i<len(b.usedReg); i++{
-	//	if !b.usedReg[i]{
-	//			b.usedReg[i]=true
-	//			b.nRegistersHit++
-	//			fmt.Println("alloc register", i)
-	//			return i
-	//	}
-	//}
+	for i:=2; i<len(b.usedReg); i++{
+		if !b.usedReg[i]{
+				b.usedReg[i]=true
+				b.nRegistersHit++
+				return i
+		}
+	}
 	b.nStackSpill++
 	return -1
 }
@@ -128,9 +127,7 @@ func Compile(ex string) (c *Code, e error) {
 	}
 
 	b := buf{hasCall: make(map[expr]bool)}
-	fmt.Println("record calls", ex)
 	recordCalls(root, b.hasCall)
-	fmt.Println("record done")
 
 	b.emit(push_rbp, mov_rsp_rbp)            // function preamble
 	b.emit(sub_rsp(16))                      // stack space for x, y
@@ -141,7 +138,7 @@ func Compile(ex string) (c *Code, e error) {
 	b.emit(pop_rbp, ret)                     // return from function
 
 	b.dump("b.out")
-	fmt.Println(b.nRegistersHit, "register hits,", b.nStackSpill, "stack spills")
+	fmt.Println(ex, ":", b.nRegistersHit, "reg hits,", b.nStackSpill, "stack spills")
 
 	instr, err := makeExecutable(b.Bytes())
 	if err != nil {
