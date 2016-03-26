@@ -57,11 +57,17 @@ func (e *binexpr) compile(b *buf) {
 		b.unstash(stash, 0)
 	}
 
-	switch e.op{
-			case "+":	b.emit(add_xmm1_xmm0)
-			case "-":	b.emit(sub_xmm1_xmm0)
-			case "*":	b.emit(mul_xmm1_xmm0)
-			case "/":	b.emit(div_xmm1_xmm0)
+	switch e.op {
+	case "+":
+		b.emit(add_xmm1_xmm0)
+	case "-":
+		b.emit(sub_xmm1_xmm0)
+	case "*":
+		b.emit(mul_xmm1_xmm0)
+	case "/":
+		b.emit(div_xmm1_xmm0)
+	default:
+		panic(e.op)
 	}
 }
 
@@ -89,7 +95,6 @@ func (b *buf) unstash(reg, dest int) {
 	}
 	b.freeReg(reg)
 }
-
 
 func (e *callexpr) compile(b *buf) {
 	if len(e.args) != 1 {
