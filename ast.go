@@ -31,7 +31,7 @@ func recordDepth(root expr, m map[expr]int) {
 		}
 	}
 	switch root.(type) {
-	case *add, *sub, *mul, *quo:
+	case *binexpr:
 		m[root]++
 	}
 	//fmt.Println("callDepth", root, m[root])
@@ -59,21 +59,18 @@ func (e *constant) String() string {
 	return fmt.Sprint(e.value)
 }
 
-type binexpr struct{ x, y expr }
+type binexpr struct{
+		op string
+		x, y expr
+}
 
 func (e *binexpr) children() []expr {
 	return []expr{e.x, e.y}
 }
 
-func (e *add) String() string { return fmt.Sprintf("(%v+%v)", e.x, e.y) }
-func (e *sub) String() string { return fmt.Sprintf("(%v-%v)", e.x, e.y) }
-func (e *mul) String() string { return fmt.Sprintf("(%v*%v)", e.x, e.y) }
-func (e *quo) String() string { return fmt.Sprintf("(%v/%v)", e.x, e.y) }
-
-type add struct{ binexpr }
-type sub struct{ binexpr }
-type mul struct{ binexpr }
-type quo struct{ binexpr }
+func(e*binexpr) String()string{
+	return fmt.Sprintf("(%v%v%v)",e.x, e.op, e.y)
+}
 
 type callexpr struct {
 	fun  string
