@@ -10,13 +10,6 @@ type expr interface {
 	String() string
 }
 
-func walk(root expr, f func(expr)) {
-	for _, c := range root.children() {
-		walk(c, f)
-	}
-	f(root)
-}
-
 func recordCalls(root expr, m map[expr]bool) {
 	for _, c := range root.children() {
 		recordCalls(c, m)
