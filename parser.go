@@ -60,14 +60,8 @@ func parseBinaryExpr(node *ast.BinaryExpr) expr {
 	switch node.Op {
 	default:
 		panic(fmt.Sprintf("syntax error:", node.Op))
-	case token.ADD:
-		return &add{binexpr{x, y}}
-	case token.SUB:
-		return &sub{binexpr{x, y}}
-	case token.MUL:
-		return &mul{binexpr{x, y}}
-	case token.QUO:
-		return &quo{binexpr{x, y}}
+case token.ADD, token.SUB, token.MUL, token.QUO:
+		return &binexpr{node.Op.String(), x, y}
 	}
 }
 
@@ -102,6 +96,6 @@ func parseUnaryExpr(node *ast.UnaryExpr) expr {
 	case token.ADD:
 		return parseExpr(node.X)
 	case token.SUB:
-		return &sub{binexpr{&constant{value: 0}, parseExpr(node.X)}}
+		return &binexpr{node.Op.String(), &constant{value: 0}, parseExpr(node.X)}
 	}
 }

@@ -31,7 +31,7 @@ func (e *constant) compile(b *buf) {
 	b.emit(mov_float_rax(e.value), mov_rax_xmm0)
 }
 
-func (e *binexpr) compileArgs(b *buf) {
+func (e *binexpr) compile(b *buf) {
 	// Determine which side of the binary expression to evaluate first:
 	//  * prefer deeper branch first, so we use least registers
 	//  * however, avoid function calls in the second branch,
@@ -55,6 +55,13 @@ func (e *binexpr) compileArgs(b *buf) {
 	} else {
 		b.emit(mov_xmm(0, 1))
 		b.unstash(stash, 0)
+	}
+
+	switch e.op{
+			case "+":	b.emit(add_xmm1_xmm0)
+			case "-":	b.emit(sub_xmm1_xmm0)
+			case "*":	b.emit(mul_xmm1_xmm0)
+			case "/":	b.emit(div_xmm1_xmm0)
 	}
 }
 
@@ -83,25 +90,6 @@ func (b *buf) unstash(reg, dest int) {
 	b.freeReg(reg)
 }
 
-func (e *add) compile(b *buf) {
-	e.compileArgs(b)
-	b.emit(add_xmm1_xmm0)
-}
-
-func (e *sub) compile(b *buf) {
-	e.compileArgs(b)
-	b.emit(sub_xmm1_xmm0)
-}
-
-func (e *quo) compile(b *buf) {
-	e.compileArgs(b)
-	b.emit(div_xmm1_xmm0)
-}
-
-func (e *mul) compile(b *buf) {
-	e.compileArgs(b)
-	b.emit(mul_xmm1_xmm0)
-}
 
 func (e *callexpr) compile(b *buf) {
 	if len(e.args) != 1 {
