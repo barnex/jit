@@ -60,7 +60,7 @@ func parseBinaryExpr(node *ast.BinaryExpr) expr {
 	switch node.Op {
 	default:
 		panic(fmt.Sprintf("syntax error:", node.Op))
-case token.ADD, token.SUB, token.MUL, token.QUO:
+	case token.ADD, token.SUB, token.MUL, token.QUO:
 		return &binexpr{node.Op.String(), x, y}
 	}
 }

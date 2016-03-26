@@ -1,24 +1,25 @@
 package jit
 
+// This file provides assembly for a handful of x86-64 instructions.
+
 import "unsafe"
 
-// amd64 machine code
 var (
-	call_rax      = []byte{0xff, 0xd0}
-	mov_rax_xmm0  = []byte{0x66, 0x48, 0x0f, 0x6e, 0xc0}
-	mov_rax_xmm1  = []byte{0x66, 0x48, 0x0f, 0x6e, 0xc8}
-	mov_rsp_rbp   = []byte{0x48, 0x89, 0xe5}
-	mov_xmm0_rax  = []byte{0x66, 0x48, 0x0f, 0x7e, 0xc0}
-	mov_xmm1_rax  = []byte{0x66, 0x48, 0x0f, 0x7e, 0xc8}
-	pop_rax       = []byte{0x58}
-	pop_rbp       = []byte{0x5d}
-	push_rax      = []byte{0x50}
-	push_rbp      = []byte{0x55}
-	ret           = []byte{0xc3}
-	add_xmm1_xmm0 = []byte{0xf2, 0x0f, 0x58, 0xc1}
-	sub_xmm1_xmm0 = []byte{0xf2, 0x0f, 0x5c, 0xc1}
-	mul_xmm1_xmm0 = []byte{0xf2, 0x0f, 0x59, 0xc1}
-	div_xmm1_xmm0 = []byte{0xf2, 0x0f, 0x5e, 0xc1}
+	call_rax      = []byte{0xff, 0xd0}                   // callq *%rax
+	mov_rax_xmm0  = []byte{0x66, 0x48, 0x0f, 0x6e, 0xc0} // mov %rax,%xmm0
+	mov_rax_xmm1  = []byte{0x66, 0x48, 0x0f, 0x6e, 0xc8} // mov %rax,%xmm1
+	mov_rsp_rbp   = []byte{0x48, 0x89, 0xe5}             // mov %rsp,%rbp
+	mov_xmm0_rax  = []byte{0x66, 0x48, 0x0f, 0x7e, 0xc0} // mov %xmm0,%rax
+	mov_xmm1_rax  = []byte{0x66, 0x48, 0x0f, 0x7e, 0xc8} // mov %xmm1,%rax
+	pop_rax       = []byte{0x58}                         // pop %rax
+	pop_rbp       = []byte{0x5d}                         // pop %rbp
+	push_rax      = []byte{0x50}                         // push %rax
+	push_rbp      = []byte{0x55}                         // push %rbp
+	ret           = []byte{0xc3}                         // ret
+	add_xmm1_xmm0 = []byte{0xf2, 0x0f, 0x58, 0xc1}       // addsd  %xmm1,%xmm0
+	sub_xmm1_xmm0 = []byte{0xf2, 0x0f, 0x5c, 0xc1}       // subsd  %xmm1,%xmm0
+	mul_xmm1_xmm0 = []byte{0xf2, 0x0f, 0x59, 0xc1}       // mulsd  %xmm1,%xmm0
+	div_xmm1_xmm0 = []byte{0xf2, 0x0f, 0x5e, 0xc1}       // divsd  %xmm1,%xmm0
 )
 
 // returns code for movq $x,%rax

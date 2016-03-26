@@ -59,17 +59,17 @@ func (e *constant) String() string {
 	return fmt.Sprint(e.value)
 }
 
-type binexpr struct{
-		op string
-		x, y expr
+type binexpr struct {
+	op   string
+	x, y expr
 }
 
 func (e *binexpr) children() []expr {
 	return []expr{e.x, e.y}
 }
 
-func(e*binexpr) String()string{
-	return fmt.Sprintf("(%v%v%v)",e.x, e.op, e.y)
+func (e *binexpr) String() string {
+	return fmt.Sprintf("(%v%v%v)", e.x, e.op, e.y)
 }
 
 type callexpr struct {
