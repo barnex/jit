@@ -10,6 +10,7 @@ func TestMovXmm(t *testing.T) {
 		r1, r2 int
 		want   []byte
 	}{
+		// reference values obtained with gcc and objdump.
 		{0, 0, []byte{0xf3, 0x0f, 0x7e, 0xc0}},
 		{0, 1, []byte{0xf3, 0x0f, 0x7e, 0xc8}},
 		{0, 2, []byte{0xf3, 0x0f, 0x7e, 0xd0}},

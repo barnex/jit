@@ -65,6 +65,9 @@ func (e *callexpr) children() []expr {
 	return c
 }
 
+// recordCalls iterates over the AST with given root
+// and records, in m, for each encountered expression whether it contains a function call.
+// Used to determine whether evaluating an expression causes the register contents to be destroyed.
 func recordCalls(root expr, m map[expr]bool) {
 	for _, c := range root.children() {
 		recordCalls(c, m)
@@ -77,6 +80,9 @@ func recordCalls(root expr, m map[expr]bool) {
 	}
 }
 
+// recordDepth iteratates over the AST with given root
+// and records, in m, the number of binary expressions under each expression encountered.
+// Used to decide which side of a binary expression requires least registers.
 func recordDepth(root expr, m map[expr]int) {
 	for _, c := range root.children() {
 		recordDepth(c, m)
@@ -84,8 +90,7 @@ func recordDepth(root expr, m map[expr]int) {
 			m[root] = m[c]
 		}
 	}
-	switch root.(type) {
-	case *binexpr:
+	if _, ok := root.(*binexpr); ok{
 		m[root]++
 	}
 }
