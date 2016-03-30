@@ -1,5 +1,8 @@
 package jit
 
+// this file provides the AST (abstract syntax tree) building blocks
+// and analysis functions.
+
 import (
 	"fmt"
 )
@@ -8,33 +11,6 @@ type expr interface {
 	compile(b *buf)
 	children() []expr
 	String() string
-}
-
-func recordCalls(root expr, m map[expr]bool) {
-	for _, c := range root.children() {
-		recordCalls(c, m)
-		if m[c] {
-			m[root] = true
-		}
-	}
-	if _, ok := root.(*callexpr); ok {
-		m[root] = true
-	}
-	//fmt.Println("recordCalls", root, m[root])
-}
-
-func recordDepth(root expr, m map[expr]int) {
-	for _, c := range root.children() {
-		recordDepth(c, m)
-		if m[c] > m[root] {
-			m[root] = m[c]
-		}
-	}
-	switch root.(type) {
-	case *binexpr:
-		m[root]++
-	}
-	//fmt.Println("callDepth", root, m[root])
 }
 
 type leaf struct{}
@@ -87,4 +63,29 @@ func (e *callexpr) children() []expr {
 		c = append(c, a)
 	}
 	return c
+}
+
+func recordCalls(root expr, m map[expr]bool) {
+	for _, c := range root.children() {
+		recordCalls(c, m)
+		if m[c] {
+			m[root] = true
+		}
+	}
+	if _, ok := root.(*callexpr); ok {
+		m[root] = true
+	}
+}
+
+func recordDepth(root expr, m map[expr]int) {
+	for _, c := range root.children() {
+		recordDepth(c, m)
+		if m[c] > m[root] {
+			m[root] = m[c]
+		}
+	}
+	switch root.(type) {
+	case *binexpr:
+		m[root]++
+	}
 }
