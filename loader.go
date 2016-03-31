@@ -14,9 +14,20 @@ import (
 //
 //#include <math.h>
 //
-//void* func_sqrt = sqrt;
-//void* func_sin  = sin;
-//void* func_cos  = cos;
+//void *func_acos  = acos;
+//void *func_asin  = asin;
+//void *func_atan  = atan;
+//void *func_cos   = cos;
+//void *func_cosh  = cosh;
+//void *func_sin   = sin;
+//void *func_sinh  = sinh;
+//void *func_tan   = tan;
+//void *func_tanh  = tanh;
+//void *func_exp   = exp;
+//void *func_log   = log;
+//void *func_log10 = log10;
+//void *func_sqrt  = sqrt;
+//void *func_fabs  = fabs;
 //
 //double eval(void *code, double x, double y) {
 //	double (*func)(double, double) = code;
@@ -38,9 +49,20 @@ import (
 import "C"
 
 var funcs = map[string]uintptr{
-	"sqrt": uintptr(C.func_sqrt),
-	"sin":  uintptr(C.func_sin),
-	"cos":  uintptr(C.func_cos),
+	"acos":  uintptr(C.func_acos ) ,
+	"asin":  uintptr(C.func_asin ) ,
+	"atan":  uintptr(C.func_atan ) ,
+	"cos":   uintptr(C.func_cos  ) ,
+	"cosh":  uintptr(C.func_cosh ) ,
+	"sin":   uintptr(C.func_sin  ) ,
+	"sinh":  uintptr(C.func_sinh ) ,
+	"tan":  uintptr(C.func_tan ) ,
+	"tanh":  uintptr(C.func_tanh ) ,
+	"exp":   uintptr(C.func_exp  ) ,
+	"log":   uintptr(C.func_log  ) ,
+	"log10": uintptr(C.func_log10) , 
+	"sqrt":  uintptr(C.func_sqrt ) ,
+	"fabs":  uintptr(C.func_fabs ) ,
 }
 
 // makeExecutable copies machine code to executable memory.
