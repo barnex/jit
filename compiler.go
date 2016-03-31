@@ -103,7 +103,7 @@ func (e *callexpr) compile(b *buf) {
 type buf struct {
 	bytes.Buffer
 	usedReg                    [8]bool
-	nRegistersHit, nStackSpill int
+	nRegistersHit, nStackSpill, maxReg int
 	hasCall                    map[expr]bool
 	callDepth                  map[expr]int
 }
@@ -113,6 +113,7 @@ func (b *buf) allocReg() int {
 		if !b.usedReg[i] {
 			b.usedReg[i] = true
 			b.nRegistersHit++
+			if i > b.maxReg{b.maxReg = i}
 			return i
 		}
 	}
@@ -152,7 +153,7 @@ func Compile(ex string) (c *Code, e error) {
 	b.emit(pop_rbp, ret)                     // return from function
 
 	b.dump("b.out")
-	fmt.Println(ex, ":", b.nRegistersHit, "reg hits,", b.nStackSpill, "stack spills")
+	fmt.Println(ex, ":", b.nRegistersHit, "reg hits,", b.maxReg, "highest register used, ", b.nStackSpill, "stack spills")
 
 	instr, err := makeExecutable(b.Bytes())
 	if err != nil {
