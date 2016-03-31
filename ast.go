@@ -90,7 +90,7 @@ func recordDepth(root expr, m map[expr]int) {
 			m[root] = m[c]
 		}
 	}
-	if _, ok := root.(*binexpr); ok{
+	if _, ok := root.(*binexpr); ok {
 		m[root]++
 	}
 }
