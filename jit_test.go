@@ -58,6 +58,23 @@ func TestJIT(t *testing.T) {
 	}
 }
 
+func TestErrors(t*testing.T){
+	tests := []string{
+		""	,
+		"notafunc(x)"	,
+		"a.b"	,
+		"a."	,
+		"1||2"	,
+	}
+
+	for _,test:=range tests{
+		_, err := Compile(test)
+		if err == nil{
+				t.Errorf("Compile %q: expected error, got nil", test)	
+		}
+	}
+}
+
 // equal returns whether x and y are approximately equal
 func equal(x, y float64) bool {
 	if math.IsNaN(x) && math.IsNaN(y) {

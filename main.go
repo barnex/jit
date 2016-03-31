@@ -27,6 +27,7 @@ func handlePlot(w http.ResponseWriter, r *http.Request) {
 	code, err := jit.Compile(expr)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
 	}
 
 	nx, ny := 500, 500

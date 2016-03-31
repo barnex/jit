@@ -87,6 +87,9 @@ type Code struct {
 // Eval executes the code, passing values for the variables x and y,
 // and returns the result.
 func (c *Code) Eval(x, y float64) float64 {
+		if len(c.instr)==0{
+		panic("eval called on nil code")	
+		}
 	return eval(c.instr, x, y)
 }
 

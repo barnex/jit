@@ -72,7 +72,7 @@ func parseCallExpr(node *ast.CallExpr) expr {
 	}
 	fun := node.Fun.(*ast.Ident).Name
 	if funcs[fun] == 0 {
-		panic(fmt.Sprintf("undefined:", fun))
+		panic(fmt.Sprintf("undefined: %q", fun))
 	}
 	if len(args) != 1 {
 		panic(fmt.Sprintf("%v needs 1 argument, have %v", fun, len(args)))
