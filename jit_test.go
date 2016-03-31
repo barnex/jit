@@ -77,6 +77,7 @@ func TestEval2D(t *testing.T) {
 	for iy := range matrix {
 		matrix[iy] = dst[iy*nx : (iy+1)*nx]
 	}
+	//code, err := Compile("x+y")
 	code, err := Compile("x+y")
 	if err != nil {
 		t.Fatal(err)
@@ -86,18 +87,18 @@ func TestEval2D(t *testing.T) {
 	ymin := -0.2
 	ymax := 0.2
 	// half cell offsets: must eval at center.
-	dx := 0.5*(xmax-xmin)/float64(nx)
-	dy := 0.5*(ymax-ymin)/float64(ny)
+	dx := 0.5 * (xmax - xmin) / float64(nx)
+	dy := 0.5 * (ymax - ymin) / float64(ny)
 	code.Eval2D(dst, xmin, xmax, nx, ymin, ymax, ny)
 
 	tests := []struct {
 		ix, iy int
 		want   float64
 	}{
-		{0, 0, xmin +dx + ymin +dy},
-		{nx-1, 0, xmax -dx + ymin + dy},
-		{0, ny-1, xmin +dx + ymax - dy},
-		{nx-1, ny-1, xmax -dx+ ymax - dy},
+		{0, 0, xmin + dx + ymin + dy},
+		{nx - 1, 0, xmax - dx + ymin + dy},
+		{0, ny - 1, xmin + dx + ymax - dy},
+		{nx - 1, ny - 1, xmax - dx + ymax - dy},
 	}
 
 	for _, test := range tests {
