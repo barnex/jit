@@ -31,8 +31,7 @@ import (
 //		y = ymin + ((ymax-ymin)*(iy+0.5))/ny;
 //		for(ix=0; ix<nx; ix++){
 //			x = xmin + ((xmax-xmin)*(ix+0.5))/nx;
-//			dst[i] = func(x, y);
-//			i++;
+//			dst[iy*nx+ix] = func(x, y);
 //		}
 //	}
 //}

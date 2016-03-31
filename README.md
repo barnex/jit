@@ -1,11 +1,4 @@
-Toy just-in-time compiler for arithmetic expressions of variables x and y. E.g.:
-
-```
-code, err := Compile("(x+1) * (y+2) / 3")
-defer code.Free()
-x, y := 1.0, 2.0
-z := code.Eval(x, y) // executes machine code generated on-the-fly!
-```
+Toy just-in-time compiler for arithmetic expressions of floating-point variables x and y, like `sqrt(x*x + y*y) - 2*cos(x+1)`.
 
 The generated machine instructions work on x68-64 linux only.
 
