@@ -69,6 +69,45 @@ func equal(x, y float64) bool {
 	return math.Abs((x-y)/(x+y)) < 1e-14
 }
 
+func TestEval2D(t *testing.T) {
+	nx := 100
+	ny := 50
+	dst := make([]float64, nx*ny)
+	matrix := make([][]float64, ny)
+	for iy := range matrix {
+		matrix[iy] = dst[iy*nx : (iy+1)*nx]
+	}
+	code, err := Compile("x+y")
+	if err != nil {
+		t.Fatal(err)
+	}
+	xmin := -0.5
+	xmax := 0.5
+	ymin := -0.2
+	ymax := 0.2
+	// half cell offsets: must eval at center.
+	dx := 0.5*(xmax-xmin)/float64(nx)
+	dy := 0.5*(ymax-ymin)/float64(ny)
+	code.Eval2D(dst, xmin, xmax, nx, ymin, ymax, ny)
+
+	tests := []struct {
+		ix, iy int
+		want   float64
+	}{
+		{0, 0, xmin +dx + ymin +dy},
+		{nx-1, 0, xmax -dx + ymin + dy},
+		{0, ny-1, xmin +dx + ymax - dy},
+		{nx-1, ny-1, xmax -dx+ ymax - dy},
+	}
+
+	for _, test := range tests {
+		have := matrix[test.iy][test.ix]
+		if !equal(have, test.want) {
+			t.Errorf("eval2D dst[%v][%v]: want %v, have %v", test.iy, test.ix, test.want, have)
+		}
+	}
+}
+
 func BenchmarkJIT(b *testing.B) {
 	code, err := Compile("(x+y)*2 + (1+x) / y")
 	if err != nil {
