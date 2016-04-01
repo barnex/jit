@@ -102,10 +102,10 @@ func (e *callexpr) compile(b *buf) {
 // buf accumulates machine code.
 type buf struct {
 	bytes.Buffer
-	usedReg                    [8]bool
+	usedReg                            [8]bool
 	nRegistersHit, nStackSpill, maxReg int
-	hasCall                    map[expr]bool
-	callDepth                  map[expr]int
+	hasCall                            map[expr]bool
+	callDepth                          map[expr]int
 }
 
 func (b *buf) allocReg() int {
@@ -113,7 +113,9 @@ func (b *buf) allocReg() int {
 		if !b.usedReg[i] {
 			b.usedReg[i] = true
 			b.nRegistersHit++
-			if i > b.maxReg{b.maxReg = i}
+			if i > b.maxReg {
+				b.maxReg = i
+			}
 			return i
 		}
 	}

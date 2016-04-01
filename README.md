@@ -16,7 +16,9 @@ Parsing transforms an expression, like `(x+1)*y` into an AST (Abstract Syntax Tr
   x   1
 ```
 
-For simplicity, we use Go's built-in parser (package `go/parser`). However, we transform the Go AST into our own representation, to stay independent of `go/ast`'s internal details. Our AST's nodes are of type `expr`, an interface implemented by the concrete types
+For simplicity, we use Go's built-in parser (package `go/parser`). However, we transform the Go AST into our own representation, to stay independent of `go/ast`'s internal details.
+
+Our AST's nodes are of type `expr`, an interface implemented by the concrete types:
 
 ```
 variable
