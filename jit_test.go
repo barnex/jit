@@ -10,50 +10,52 @@ func sin(x float64) float64  { return math.Sin(x) }
 func cos(x float64) float64  { return math.Cos(x) }
 
 func TestJIT(t *testing.T) {
-	for _, useCallDepth = range []bool{true, false} {
-		for _, useRegisters = range []bool{true, false} {
-			for _, x := range []float64{3} { //, -1e9, -123.4, -1, 0, 1, 123.4, 1e9} {
-				for _, y := range []float64{5} { //, -1e9, -123.4, -1, 0, 1, 123.4, 1e9} {
-					tests := []struct {
-						expr string
-						want float64
-					}{
-						{"x", x},
-						{"y", y},
-						{"-x", -x},
-						{"x+y", x + y},
-						{"2+x+y+1", 2 + x + y + 1},
-						{"1", 1},
-						{"1.0", 1},
-						{"1+2", 1 + 2},
-						{"1-2", 1 - 2},
-						{"2*3", 2 * 3},
-						{"5/2", 5. / 2.},
-						{"2*(x+y)*(x-y)/2", 2 * (x + y) * (x - y) / 2},
-						{"1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1", 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1},
-						{"sqrt(x)", sqrt(x)},
-						{"sqrt(9)", sqrt(9)},
-						{"sqrt(x+y)", sqrt(x + y)},
-						{"sin(2/x)+cos(sqrt(x+y+1))", sin(2/x) + cos(sqrt(x+y+1))},
-						{"cos(9)", cos(9)},
-						{"sin(x+y)", sin(x + y)},
-						{"sqrt(sqrt(sqrt(x)))", sqrt(sqrt(sqrt(x)))},
-						{"1+2+(3+2*4+((((5+6*2)+7)+sqrt(8))+9)+10*sin(2-x+y/3))+11", 1 + 2 + (3 + 2*4 + ((((5 + 6*2) + 7) + sqrt(8)) + 9) + 10*sin(2-x+y/3)) + 11},
-						{"1+x+(y+2*4+((((5+y*2)+7)+sqrt(x))+y)+10*sin(2-x+y/x))+y", 1 + x + (y + 2*4 + ((((5 + y*2) + 7) + sqrt(x)) + y) + 10*sin(2-x+y/x)) + y},
-						{"1+2+(3+2*4+((((5+6*2)+7)+(8))+9)+10*sin(2-x+y/3))+11", 1 + 2 + (3 + 2*4 + ((((5 + 6*2) + 7) + (8)) + 9) + 10*sin(2-x+y/3)) + 11},
-						{"1+2+(3+2*4+((((5+6*2)+7)+(8))+9)+10*(2-x+y/3))+11", 1 + 2 + (3 + 2*4 + ((((5 + 6*2) + 7) + (8)) + 9) + 10*(2-x+y/3)) + 11},
-					}
-
-					for _, test := range tests {
-						code, err := Compile(test.expr)
-						if err != nil {
-							t.Error(err)
-							continue
+	for _, useConstFolding = range []bool{true, false} {
+		for _, useCallDepth = range []bool{true, false} {
+			for _, useRegisters = range []bool{true, false} {
+				for _, x := range []float64{3} { //, -1e9, -123.4, -1, 0, 1, 123.4, 1e9} {
+					for _, y := range []float64{5} { //, -1e9, -123.4, -1, 0, 1, 123.4, 1e9} {
+						tests := []struct {
+							expr string
+							want float64
+						}{
+							{"x", x},
+							{"y", y},
+							{"-x", -x},
+							{"x+y", x + y},
+							{"2+x+y+1", 2 + x + y + 1},
+							{"1", 1},
+							{"1.0", 1},
+							{"1+2", 1 + 2},
+							{"1-2", 1 - 2},
+							{"2*3", 2 * 3},
+							{"5/2", 5. / 2.},
+							{"2*(x+y)*(x-y)/2", 2 * (x + y) * (x - y) / 2},
+							{"1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1", 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1},
+							{"sqrt(x)", sqrt(x)},
+							{"sqrt(9)", sqrt(9)},
+							{"sqrt(x+y)", sqrt(x + y)},
+							{"sin(2/x)+cos(sqrt(x+y+1))", sin(2/x) + cos(sqrt(x+y+1))},
+							{"cos(9)", cos(9)},
+							{"sin(x+y)", sin(x + y)},
+							{"sqrt(sqrt(sqrt(x)))", sqrt(sqrt(sqrt(x)))},
+							{"1+2+(3+2*4+((((5+6*2)+7)+sqrt(8))+9)+10*sin(2-x+y/3))+11", 1 + 2 + (3 + 2*4 + ((((5 + 6*2) + 7) + sqrt(8)) + 9) + 10*sin(2-x+y/3)) + 11},
+							{"1+x+(y+2*4+((((5+y*2)+7)+sqrt(x))+y)+10*sin(2-x+y/x))+y", 1 + x + (y + 2*4 + ((((5 + y*2) + 7) + sqrt(x)) + y) + 10*sin(2-x+y/x)) + y},
+							{"1+2+(3+2*4+((((5+6*2)+7)+(8))+9)+10*sin(2-x+y/3))+11", 1 + 2 + (3 + 2*4 + ((((5 + 6*2) + 7) + (8)) + 9) + 10*sin(2-x+y/3)) + 11},
+							{"1+2+(3+2*4+((((5+6*2)+7)+(8))+9)+10*(2-x+y/3))+11", 1 + 2 + (3 + 2*4 + ((((5 + 6*2) + 7) + (8)) + 9) + 10*(2-x+y/3)) + 11},
 						}
-						have := code.Eval(x, y)
-						code.Free()
-						if !equal(have, test.want) {
-							t.Errorf("%v with x=%v,y=%v: have %v, want: %v", test.expr, x, y, have, test.want)
+
+						for _, test := range tests {
+							code, err := Compile(test.expr)
+							if err != nil {
+								t.Error(err)
+								continue
+							}
+							have := code.Eval(x, y)
+							code.Free()
+							if !equal(have, test.want) {
+								t.Errorf("%v with x=%v,y=%v: have %v, want: %v", test.expr, x, y, have, test.want)
+							}
 						}
 					}
 				}

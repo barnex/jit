@@ -10,17 +10,21 @@ import (
 type expr interface {
 	compile(b *buf)
 	children() []expr
+	simplify() expr
 	String() string
-}
-
-func (*variable) children() []expr {
-	return nil
 }
 
 type variable struct {
 	name string
 }
 
+func (*variable) children() []expr {
+	return nil
+}
+
+func (e *variable) simplify() expr {
+	return e
+}
 func (e *variable) String() string {
 	return e.name
 }
@@ -31,6 +35,10 @@ type constant struct {
 
 func (*constant) children() []expr {
 	return nil
+}
+
+func (e *constant) simplify() expr {
+	return e
 }
 
 func (e *constant) String() string {
@@ -46,6 +54,12 @@ func (e *binexpr) children() []expr {
 	return []expr{e.x, e.y}
 }
 
+func (e *binexpr) simplify() expr {
+	x := e.x.simplify()
+	y := e.y.simplify()
+	return &binexpr{op: e.op, x: x, y: y}
+}
+
 func (e *binexpr) String() string {
 	return fmt.Sprintf("(%v%v%v)", e.x, e.op, e.y)
 }
@@ -55,16 +69,24 @@ type callexpr struct {
 	args []expr
 }
 
-func (e *callexpr) String() string {
-	return fmt.Sprintf("%v(%v)", e.fun, e.args[0])
-}
-
 func (e *callexpr) children() []expr {
 	var c []expr
 	for _, a := range e.args {
 		c = append(c, a)
 	}
 	return c
+}
+
+func (e *callexpr) simplify() expr {
+	args := make([]expr, len(e.args))
+	for i, a := range e.args {
+		args[i] = a.simplify()
+	}
+	return &callexpr{fun: e.fun, args: args}
+}
+
+func (e *callexpr) String() string {
+	return fmt.Sprintf("%v(%v)", e.fun, e.args[0])
 }
 
 // recordCalls iterates over the AST with given root
