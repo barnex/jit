@@ -1,6 +1,6 @@
 #jit
 
-Toy just-in-time compiler for arithmetic expressions of floating-point variables x and y, like `sqrt(x*x + y*y) - 2*cos(x+1)`.  Intended for fun and learning only.
+Toy just-in-time compiler for arithmetic expressions of floating-point variables x and y, like `sqrt(x*x + y*y) - 2*cos(x+1)`. Intended for fun and learning only. Written in Go and C.
 
 The generated machine instructions are for x68-64 and are tested on Linux only.
 
@@ -50,7 +50,7 @@ Internally, we keep on using `xmm0` and `xmm1` as the arguments for function cal
 
 We generate code using a stack machine strategy, but registerize into `xmm2`-`xmm7` if possible -- or spill to the stack otherwise.
 
-For binary expressions, we evaluate the "deepest" branch first. This ensures we only need `O(log(N))` registers for `N` binary expression nodes. Otherwise, unbalanced expressions like "(x+(x+(x+(x+(x+(x+(x+(x+(x+(x+y))))))))))" would require `O(N)` registers and quickly start spilling to the stack.
+For binary expressions, we evaluate the "deepest" branch first. This ensures we only need `O(log(N))` registers for `N` binary expression nodes. Otherwise, unbalanced expressions like `(x+(x+(x+(x+(x+(x+(x+(x+(x+(x+y))))))))))` would require `O(N)` registers and quickly start spilling to the stack.
 
 Finally, we must take care that function calls do not destroy the contents of `xmm2`-`xmm7`. When a branch of a binary expression contains a function call, we simply never store the result of the other branch in a register.
 
@@ -71,48 +71,82 @@ Putting it all together, the final code looks relatively OK for a small project 
 As an example, `(x+1)*(2+sqrt(y+1))` compiles to:
 
 ```
-55                              push   %rbp
-48 89 e5                        mov    %rsp,%rbp
-48 81 ec 10 00 00 00            sub    $0x10,%rsp
-66 48 0f 7e c0                  movq   %xmm0,%rax
-48 89 85 f8 ff ff ff            mov    %rax,-0x8(%rbp)
-66 48 0f 7e c8                  movq   %xmm1,%rax
-48 89 85 f0 ff ff ff            mov    %rax,-0x10(%rbp)
-48 b8 00 00 00 00 00 00 f0 3f   movabs $0x3ff0000000000000,%rax
-66 48 0f 6e c0                  movq   %rax,%xmm0
-f3 0f 7e d0                     movq   %xmm0,%xmm2
-48 8b 85 f0 ff ff ff            mov    -0x10(%rbp),%rax
-66 48 0f 6e c0                  movq   %rax,%xmm0
-f3 0f 7e ca                     movq   %xmm2,%xmm1
-f2 0f 58 c1                     addsd  %xmm1,%xmm0
-48 b8 30 1c 40 00 00 00 00 00   movabs $0x401c30,%rax
-ff d0                           callq  *%rax
-f3 0f 7e d0                     movq   %xmm0,%xmm2
-48 b8 00 00 00 00 00 00 00 40   movabs $0x4000000000000000,%rax
-66 48 0f 6e c0                  movq   %rax,%xmm0
-f3 0f 7e ca                     movq   %xmm2,%xmm1
-f2 0f 58 c1                     addsd  %xmm1,%xmm0
-f3 0f 7e d0                     movq   %xmm0,%xmm2
-48 b8 00 00 00 00 00 00 f0 3f   movabs $0x3ff0000000000000,%rax
-66 48 0f 6e c0                  movq   %rax,%xmm0
-f3 0f 7e d8                     movq   %xmm0,%xmm3
-48 8b 85 f8 ff ff ff            mov    -0x8(%rbp),%rax
-66 48 0f 6e c0                  movq   %rax,%xmm0
-f3 0f 7e cb                     movq   %xmm3,%xmm1
-f2 0f 58 c1                     addsd  %xmm1,%xmm0
-f3 0f 7e ca                     movq   %xmm2,%xmm1
-f2 0f 59 c1                     mulsd  %xmm1,%xmm0
-48 81 c4 10 00 00 00            add    $0x10,%rsp
-5d                              pop    %rbp
-c3                              retq   
+push   %rbp
+mov    %rsp,%rbp
+sub    $0x10,%rsp
+movq   %xmm0,%rax
+mov    %rax,-0x8(%rbp)
+movq   %xmm1,%rax
+mov    %rax,-0x10(%rbp)
+movabs $0x3ff0000000000000,%rax
+movq   %rax,%xmm0
+movq   %xmm0,%xmm2
+mov    -0x10(%rbp),%rax
+movq   %rax,%xmm0
+movq   %xmm2,%xmm1
+addsd  %xmm1,%xmm0
+movabs $0x401c30,%rax
+callq  *%rax
+movq   %xmm0,%xmm2
+movabs $0x4000000000000000,%rax
+movq   %rax,%xmm0
+movq   %xmm2,%xmm1
+addsd  %xmm1,%xmm0
+movq   %xmm0,%xmm2
+movabs $0x3ff0000000000000,%rax
+movq   %rax,%xmm0
+movq   %xmm0,%xmm3
+mov    -0x8(%rbp),%rax
+movq   %rax,%xmm0
+movq   %xmm3,%xmm1
+addsd  %xmm1,%xmm0
+movq   %xmm2,%xmm1
+mulsd  %xmm1,%xmm0
+add    $0x10,%rsp
+pop    %rbp
+retq   
 ```
 
 ## Assembler
 
-## Dynamic loading
+The last stage is assembling binary machine code for the instructions our compiler has just output. x86-64 instruction encoding is a little bit _ehum_ convoluted, so we'll keep this stage as simple as possible. `asm.go` implements assembly for a handful instructions like `call` `mov` `movabsq` `push` `pop` `ret` `add` `sub` `mul` `div`.
+
+We sidestep variable-length encoding by limiting ourselves mostly to registers `xmm0-7` in addition to the necessary `rbp`, `rsp` and `rax`. We also sidestep the _ehum_ "joy" of x86 addressing modes by using a load-store strategy, separating memory access from other operations.
+
+
+## Dynamic loading & execution
+
+Now that we have our binary machine code, we need to actually execute it.
+
+First, we copy the code into a MMAP'ed memory segment and mark it as executable (calling unix' MPROTECT).
+
+Then, we use a little C shim to call the code:
+
+```
+double eval(void *code, double x, double y) {
+      double (*func)(double, double) = code;
+      return func(x, y);
+}
+```
+
+That's it.
+
+## Performance
+
+# Compilation
+
+Compilation is fast. Compiling _and MMAPping_ `1+x+(3+y*4+((((x+y*2)+x)+sqrt(8))+y)+10*sin(2-x+y/3))+11` takes 82µs on my aging laptop with a 3rd gen i7-3612QM CPU.
+
+# Execution
+
+Execution speed is fast too. `1+x+(3+y*4+((((x+y*2)+x)+sqrt(8))+y)+10*sin(2-x+y/3))+11`` evaluates in 51 ns, while an ahead-of-time compiled version using the Go compiler evaluates in 41 ns. Not bad for a tiny toy compiler.
 
 ## Use case: implicit function plotter
 
-An example use case is an implicit function plotter. Here we plot the curve implicitly defined by `(x*x-y*y-y*x-4)*(x*x+y*y-16)`:
+Finally, as an example use case we use our just-in-time compiler to implement an implicit function plotter. Implicit curves are defined by equations like `x*x + y*y = 1` (a circle with radius 1). These are somewhat hard to plot. E.g. a 500x500 pixel plot requires the relation to be evaluated in all 250000 pixels.
+
+Note that an explict plot, like `y=sqrt(1-x*x)` would only require 500 evaluations to obtain the same resolution. Hence implicit curves are a good use for our just-in-time compiler, as we're going to do _a lot_ of evaluations.
+
+Here is the curve defined by `(x*x-y*y-y*x-4)*(x*x+y*y-16) = 0`:
 
 ![fig](plotter.png)

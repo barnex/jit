@@ -9,7 +9,7 @@ import (
 var (
 	useRegisters    = true
 	useCallDepth    = true
-	useConstFolding = false
+	useConstFolding = true
 )
 
 // Compile compiles an arithmetic expression, which may contain the variables x and y. E.g.:
@@ -41,8 +41,8 @@ func Compile(ex string) (c *Code, e error) {
 	b.emit(add_rsp(16))                      // free stack space for x,y
 	b.emit(pop_rbp, ret)                     // return from function
 
-	b.dump("b.out")
-	fmt.Println(ex, ":", b.nRegistersHit, "reg hits,", b.maxReg, "highest register used, ", b.nStackSpill, "stack spills")
+	//b.dump("b.out")
+	//fmt.Println(ex, ":", b.nRegistersHit, "reg hits,", b.maxReg, "highest register used, ", b.nStackSpill, "stack spills")
 
 	instr, err := makeExecutable(b.Bytes())
 	if err != nil {
