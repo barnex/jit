@@ -48,7 +48,7 @@ func handlePlot(w http.ResponseWriter, r *http.Request) {
 			img.Set(ix, iy, color.White)
 		}
 	}
-	pen := color.RGBA{B:150}
+	pen := color.RGBA{B: 150}
 	for iy := 0; iy < ny; iy++ {
 		for ix := 0; ix < nx-1; ix++ {
 			if matrix[iy][ix]*matrix[iy][ix+1] < 0 {

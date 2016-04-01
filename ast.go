@@ -13,12 +13,11 @@ type expr interface {
 	String() string
 }
 
-type leaf struct{}
-
-func (_ leaf) children() []expr { return nil }
+func (*variable) children() []expr {
+	return nil
+}
 
 type variable struct {
-	leaf
 	name string
 }
 
@@ -27,8 +26,11 @@ func (e *variable) String() string {
 }
 
 type constant struct {
-	leaf
 	value float64
+}
+
+func (*constant) children() []expr {
+	return nil
 }
 
 func (e *constant) String() string {
