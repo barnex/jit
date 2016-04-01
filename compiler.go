@@ -9,7 +9,7 @@ import (
 var (
 	useRegisters    = true
 	useCallDepth    = true
-	useConstFolding = true
+	useConstFolding = false
 )
 
 // Compile compiles an arithmetic expression, which may contain the variables x and y. E.g.:
@@ -22,9 +22,9 @@ func Compile(ex string) (c *Code, e error) {
 	}
 
 	if useConstFolding {
-		fmt.Print(root)
+		//fmt.Print(root)
 		root = root.simplify()
-		fmt.Println("->", root)
+		//fmt.Println("->", root)
 	}
 
 	b := buf{hasCall: make(map[expr]bool), callDepth: make(map[expr]int)}
@@ -42,7 +42,7 @@ func Compile(ex string) (c *Code, e error) {
 	b.emit(pop_rbp, ret)                     // return from function
 
 	b.dump("b.out")
-	//fmt.Println(ex, ":", b.nRegistersHit, "reg hits,", b.maxReg, "highest register used, ", b.nStackSpill, "stack spills")
+	fmt.Println(ex, ":", b.nRegistersHit, "reg hits,", b.maxReg, "highest register used, ", b.nStackSpill, "stack spills")
 
 	instr, err := makeExecutable(b.Bytes())
 	if err != nil {
