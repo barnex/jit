@@ -45,6 +45,11 @@ func (e *constant) String() string {
 	return fmt.Sprint(e.value)
 }
 
+func isConst(e expr) bool {
+	_, ok := e.(*constant)
+	return ok
+}
+
 type binexpr struct {
 	op   string
 	x, y expr
@@ -57,6 +62,25 @@ func (e *binexpr) children() []expr {
 func (e *binexpr) simplify() expr {
 	x := e.x.simplify()
 	y := e.y.simplify()
+
+	if isConst(x) && isConst(y) {
+		x := x.(*constant).value
+		y := y.(*constant).value
+		var v float64
+		switch e.op {
+		default:
+			panic("bug")
+		case "+":
+			v = x + y
+		case "-":
+			v = x - y
+		case "*":
+			v = x * y
+		case "/":
+			v = x / y
+		}
+		return &constant{v}
+	}
 	return &binexpr{op: e.op, x: x, y: y}
 }
 
