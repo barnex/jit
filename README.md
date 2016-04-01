@@ -27,10 +27,48 @@ binexpr
 callexpr
 ```
 
+## Constant folding
 
-## Code generation
+We employ constant folding on the AST, i.e. replacing constant expressions by their numerical value. E.g.:
 
-`(x+1)*(2+sqrt(y+1))` compiles to:
+```
+((x*x)/(1+sqrt(2))) -> ((x*x)/2.414213562373095)
+```
+
+
+## Compilation
+
+### calling convention
+
+We generate code for a function body, following the System V AMD64 ABI calling conention (x, y are passed via `xmm0`, `xmm1` respectively. Result returned in `xmm0`)
+
+### locals
+
+Internally, we keep on using `xmm0` and `xmm1` as the arguments for function calls or binary expressions, and store results in `xmm0`. The original arguments x and y are safely stored as local variables on the stack.
+
+### registerization
+
+We generate code using a stack machine strategy, but registerize into `xmm2`-`xmm7` if possible -- or spill to the stack otherwise.
+
+For binary expressions, we evaluate the "deepest" branch first. This ensures we only need `O(log(N))` registers for `N` binary expression nodes. Otherwise, unbalanced expressions like "(x+(x+(x+(x+(x+(x+(x+(x+(x+(x+y))))))))))" would require `O(N)` registers and quickly start spilling to the stack.
+
+Finally, we must take care that function calls do not destroy the contents of `xmm2`-`xmm7`. When a branch of a binary expression contains a function call, we simply never store the result of the other branch in a register.
+
+The result is quite good, with most expressions of typical length hitting the stack only very few times, if at all:
+
+```
+2*(x+y)*(x-y)/2 :                                         4 registers,  0 stack spills
+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1 :         1 register,   0 stack spills
+1+2+(3+2*4+((((5+6*2)+7)+(8))+9)+10*sin(2-x+y/3))+11 :    4 registers,  0 stack spill
+1+x+(y+2*4+((((5+y*2)+7)+sqrt(x))+y)+10*sin(2-x+y/x))+y : 4 registers,  1 stack spill
+```
+
+### putting it all together
+
+Putting it all together, the final code looks relatively OK for a small project like this. There are a few redundant `mov`s, but these are cheap. Immediate values and function calls could have been a bit more elegant, e.g. using `rip`-relative addressing.
+
+
+As an example, `(x+1)*(2+sqrt(y+1))` compiles to:
 
 ```
 55                              push   %rbp
