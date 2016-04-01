@@ -7,8 +7,9 @@ import (
 )
 
 var (
-	useRegisters = true
-	useCallDepth = true
+	useRegisters    = true
+	useCallDepth    = true
+	useConstFolding = true
 )
 
 // Compile compiles an arithmetic expression, which may contain the variables x and y. E.g.:
@@ -18,6 +19,12 @@ func Compile(ex string) (c *Code, e error) {
 	root, err := Parse(ex)
 	if err != nil {
 		return nil, err
+	}
+
+	if useConstFolding {
+		fmt.Print(root)
+		root = root.simplify()
+		fmt.Println("->", root)
 	}
 
 	b := buf{hasCall: make(map[expr]bool), callDepth: make(map[expr]int)}
