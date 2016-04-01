@@ -4,9 +4,9 @@ Toy just-in-time compiler for arithmetic expressions of floating-point variables
 
 The generated machine instructions are for x68-64 and are tested on Linux only.
 
-## Parsing & AST
+## Parsing and the AST
 
-Parsing transforms an expression, like `(x+y)*y` into an AST (Abstract Syntax Tree), like:
+Parsing transforms an expression, like `(x+1)*y` into an AST (Abstract Syntax Tree), like:
 
 ```
       *
@@ -16,8 +16,14 @@ Parsing transforms an expression, like `(x+y)*y` into an AST (Abstract Syntax Tr
   x   1
 ```
 
-For simplicity, we use Go's built-in parser (package `go/parser`). However, we transform the Go AST into our own representation, to stay independent of `go/ast`'s internal details.
+For simplicity, we use Go's built-in parser (package `go/parser`). However, we transform the Go AST into our own representation, to stay independent of `go/ast`'s internal details. Our AST's nodes are of type `expr`, an interface implemented by the concrete types
 
+```
+variable
+constant
+binexpr
+callexpr
+```
 
 
 ## Code generation
