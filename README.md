@@ -1,6 +1,6 @@
 #jit
 
-Toy just-in-time compiler for arithmetic expressions of floating-point variables x and y, like `sqrt(x*x + y*y) - 2*cos(x+1)`. Intended for fun and learning only. Written in Go and C.
+This is a toy just-in-time compiler for arithmetic expressions of floating-point variables x and y, like `sqrt(x*x + y*y) - 2*cos(x+1)`. Intended for fun and learning only. Written in Go and C.
 
 The generated machine instructions are for x68-64 and are tested on Linux only.
 
@@ -29,7 +29,7 @@ callexpr
 
 ## Constant folding
 
-We employ constant folding on the AST, i.e. replacing constant expressions by their numerical value. E.g.:
+After parsing, we employ constant folding on the AST, i.e. replacing constant expressions by their numerical value. E.g.:
 
 ```
 ((x*x)/(1+sqrt(2))) -> ((x*x)/2.414213562373095)
@@ -37,6 +37,8 @@ We employ constant folding on the AST, i.e. replacing constant expressions by th
 
 
 ## Compilation
+
+Now that we have a somewhat optimize AST, we can compile it into machine instructions.
 
 ### calling convention
 
@@ -48,9 +50,9 @@ Internally, we keep on using `xmm0` and `xmm1` as the arguments for function cal
 
 ### registerization
 
-We generate code using a stack machine strategy, but registerize into `xmm2`-`xmm7` if possible -- or spill to the stack otherwise.
+We generate code using a stack machine strategy, but registerize into `xmm2`-`xmm7` where possible -- or spill to the stack otherwise.
 
-For binary expressions, we evaluate the "deepest" branch first. This ensures we only need `O(log(N))` registers for `N` binary expression nodes. Otherwise, unbalanced expressions like `(x+(x+(x+(x+(x+(x+(x+(x+(x+(x+y))))))))))` would require `O(N)` registers and quickly start spilling to the stack.
+For binary expressions, we evaluate the "deepest" branch first. This ensures we only need `O(log(N))` registers for `N` binary expression nodes. Otherwise, unbalanced expressions like `(x+(x+(x+(x+(x+(x+(x+(x+(x+(x+y))))))))))` would require `O(N)` registers and would quickly spill to the stack.
 
 Finally, we must take care that function calls do not destroy the contents of `xmm2`-`xmm7`. When a branch of a binary expression contains a function call, we simply never store the result of the other branch in a register.
 
@@ -111,7 +113,7 @@ retq
 
 The last stage is assembling binary machine code for the instructions our compiler has just output. x86-64 instruction encoding is a little bit _ehum_ convoluted, so we'll keep this stage as simple as possible. `asm.go` implements assembly for a handful instructions like `call` `mov` `movabsq` `push` `pop` `ret` `add` `sub` `mul` `div`.
 
-We sidestep variable-length encoding by limiting ourselves mostly to registers `xmm0-7` in addition to the necessary `rbp`, `rsp` and `rax`. We also sidestep the _ehum_ "joy" of x86 addressing modes by using a load-store strategy, separating memory access from other operations.
+We sidestep variable-length encoding difficulties by limiting ourselves mostly to registers `xmm0-7` in addition to the necessary `rbp`, `rsp` and `rax`. We also sidestep the "joy" of x86 addressing modes by using a strict load-store approach, separating memory access from other operations.
 
 
 ## Dynamic loading & execution
@@ -133,20 +135,20 @@ That's it.
 
 ## Performance
 
-# Compilation
+### Compilation
 
-Compilation is fast. Compiling _and MMAPping_ `1+x+(3+y*4+((((x+y*2)+x)+sqrt(8))+y)+10*sin(2-x+y/3))+11` takes 82µs on my aging laptop with a 3rd gen i7-3612QM CPU.
+Compilation is _fast_. Compiling and MMAPping `1+x+(3+y*4+((((x+y*2)+x)+sqrt(8))+y)+10*sin(2-x+y/3))+11` takes 82µs on my aging laptop with a 3rd gen i7-3612QM CPU.
 
-# Execution
+### Execution
 
-Execution speed is fast too. `1+x+(3+y*4+((((x+y*2)+x)+sqrt(8))+y)+10*sin(2-x+y/3))+11`` evaluates in 51 ns, while an ahead-of-time compiled version using the Go compiler evaluates in 41 ns. Not bad for a tiny toy compiler.
+Execution speed is fast too. `1+x+(3+y*4+((((x+y*2)+x)+sqrt(8))+y)+10*sin(2-x+y/3))+11`` evaluates in 51 ns, while an ahead-of-time compiled version using the pretty mature Go 1.6 compiler evaluates in 41 ns. Not bad for a tiny toy project.
 
 ## Use case: implicit function plotter
 
-Finally, as an example use case we use our just-in-time compiler to implement an implicit function plotter. Implicit curves are defined by equations like `x*x + y*y = 1` (a circle with radius 1). These are somewhat hard to plot. E.g. a 500x500 pixel plot requires the relation to be evaluated in all 250000 pixels.
+Finally, as an example use case we demonstrate an implicit function plotter. Implicit curves are defined by equations like `x*x + y*y = 1` (a circle with radius 1). These are somewhat hard to plot. E.g. a 500x500 pixel plot requires the relation to be evaluated in all 250000 pixels.
 
-Note that an explict plot, like `y=sqrt(1-x*x)` would only require 500 evaluations to obtain the same resolution. Hence implicit curves are a good use for our just-in-time compiler, as we're going to do _a lot_ of evaluations.
+Note that an explict plot, like `y=sqrt(1-x*x)` would require only 500 evaluations to obtain the same resolution. Hence implicit curves are a good use for our just-in-time compiler, as we're going to do _a lot_ of evaluations.
 
-Here is the curve defined by `(x*x-y*y-y*x-4)*(x*x+y*y-16) = 0`:
+Here is the curve defined by `(x*x-y*y-y*x-4)*(x*x+y*y-16) = 0`. The evaluation in 250000 points takes only about 10ms.
 
 ![fig](plotter.png)
