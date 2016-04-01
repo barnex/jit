@@ -46,6 +46,11 @@ import (
 //		}
 //	}
 //}
+//
+//double call_func(void* f, double x){
+//	double (*func)(double) = f;
+//	return func(x);
+//}
 import "C"
 
 var funcs = map[string]uintptr{
@@ -90,6 +95,10 @@ func makeExecutable(code []byte) ([]byte, error) {
 // and returns the result.
 func eval(code []byte, x, y float64) float64 {
 	return float64(C.eval(unsafe.Pointer(&code[0]), C.double(x), C.double(y)))
+}
+
+func callCFunc(f uintptr, x float64)float64{
+	return float64(C.call_func(unsafe.Pointer(f), C.double(x)))
 }
 
 func eval2D(code []byte, dst []float64, xmin, xmax float64, nx int, ymin, ymax float64, ny int) {
