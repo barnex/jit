@@ -106,6 +106,12 @@ func (e *callexpr) simplify() expr {
 	for i, a := range e.args {
 		args[i] = a.simplify()
 	}
+	if len(args) == 1 && isConst(args[0]){
+		a := args[0].(*constant).value
+		f := funcs[e.fun]
+		v := callCFunc(f, a)
+		return &constant{v}
+	}
 	return &callexpr{fun: e.fun, args: args}
 }
 
