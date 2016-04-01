@@ -1,8 +1,24 @@
 #jit
 
-Toy just-in-time compiler for arithmetic expressions of floating-point variables x and y, like `sqrt(x*x + y*y) - 2*cos(x+1)`.
+Toy just-in-time compiler for arithmetic expressions of floating-point variables x and y, like `sqrt(x*x + y*y) - 2*cos(x+1)`.  Intended for fun and learning only.
 
-The generated machine instructions are for x68-64 and are tested on linux only.
+The generated machine instructions are for x68-64 and are tested on Linux only.
+
+## Parsing & AST
+
+Parsing transforms an expression, like `(x+y)*y` into an AST (Abstract Syntax Tree), like:
+
+```
+      *
+     /  \ 
+    +    y
+   / \
+  x   1
+```
+
+For simplicity, we use Go's built-in parser (package `go/parser`). However, we transform the Go AST into our own representation, to stay independent of `go/ast`'s internal details.
+
+
 
 ## Code generation
 
@@ -45,7 +61,11 @@ f2 0f 59 c1                     mulsd  %xmm1,%xmm0
 c3                              retq   
 ```
 
-## Implicit function plotter
+## Assembler
+
+## Dynamic loading
+
+## Use case: implicit function plotter
 
 An example use case is an implicit function plotter. Here we plot the curve implicitly defined by `(x*x-y*y-y*x-4)*(x*x+y*y-16)`:
 
