@@ -35,7 +35,7 @@ import (
 //}
 //
 //void eval_2d(void *code, double *dst, double xmin, double xmax, int nx, double ymin, double ymax, int ny){
-//	int i, ix, iy;
+//	int ix, iy;
 //	double x, y;
 //	double (*func)(double, double) = code;
 //	for(iy=0; iy<ny; iy++){
