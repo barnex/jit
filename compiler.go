@@ -6,6 +6,10 @@ import (
 	"os"
 )
 
+var (
+	useRegisters = true
+)
+
 func (e *variable) compile(b *buf) {
 	switch e.name {
 	default:
@@ -78,10 +82,15 @@ func (b *buf) stash(destroyRegs bool) int {
 }
 
 func (b *buf) unstash(reg, dest int) {
-	if reg == -1 {
-		b.emit(pop_rax, mov_rax_xmm1) // y in xmm1
-	} else {
+	switch {
+	case reg == -1 && dest == 1:
+		b.emit(pop_rax, mov_rax_xmm1)
+	case reg == -1 && dest == 0:
+		b.emit(pop_rax, mov_rax_xmm0)
+	case reg != -1:
 		b.emit(mov_xmm(reg, dest))
+	default:
+		panic("bug")
 	}
 	b.freeReg(reg)
 }
@@ -109,6 +118,10 @@ type buf struct {
 }
 
 func (b *buf) allocReg() int {
+	if !useRegisters {
+		b.nStackSpill++
+		return -1
+	}
 	for i := 2; i < len(b.usedReg); i++ {
 		if !b.usedReg[i] {
 			b.usedReg[i] = true
@@ -154,7 +167,7 @@ func Compile(ex string) (c *Code, e error) {
 	b.emit(add_rsp(16))                      // free stack space for x,y
 	b.emit(pop_rbp, ret)                     // return from function
 
-	//b.dump("b.out")
+	b.dump("b.out")
 	//fmt.Println(ex, ":", b.nRegistersHit, "reg hits,", b.maxReg, "highest register used, ", b.nStackSpill, "stack spills")
 
 	instr, err := makeExecutable(b.Bytes())
