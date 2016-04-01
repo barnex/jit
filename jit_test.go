@@ -10,6 +10,7 @@ func sin(x float64) float64  { return math.Sin(x) }
 func cos(x float64) float64  { return math.Cos(x) }
 
 func TestJIT(t *testing.T) {
+		for _, useRegisters = range []bool{true, false}{
 	for _, x := range []float64{3} { //, -1e9, -123.4, -1, 0, 1, 123.4, 1e9} {
 		for _, y := range []float64{5} { //, -1e9, -123.4, -1, 0, 1, 123.4, 1e9} {
 			tests := []struct {
@@ -55,6 +56,7 @@ func TestJIT(t *testing.T) {
 				}
 			}
 		}
+	}
 	}
 }
 
