@@ -8,13 +8,13 @@ const (
 )
 
 func BenchmarkCompileSmall(b *testing.B) {
-	for i:=0; i<b.N; i++{
-	Compile("(x+y)*2 + (1+x) / y")
+	for i := 0; i < b.N; i++ {
+		Compile("(x+y)*2 + (1+x) / y")
 	}
 }
 
 func BenchmarkCompileBig(b *testing.B) {
-	for i:=0; i<b.N; i++{
+	for i := 0; i < b.N; i++ {
 		Compile("1+x+(3+y*4+((((x+y*2)+x)+sqrt(8))+y)+10*sin(2-x+y/3))+11")
 	}
 }

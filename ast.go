@@ -11,7 +11,6 @@ type expr interface {
 	compile(b *buf)
 	children() []expr
 	simplify() expr
-	String() string
 }
 
 type variable struct {
@@ -106,7 +105,7 @@ func (e *callexpr) simplify() expr {
 	for i, a := range e.args {
 		args[i] = a.simplify()
 	}
-	if len(args) == 1 && isConst(args[0]){
+	if len(args) == 1 && isConst(args[0]) {
 		a := args[0].(*constant).value
 		f := funcs[e.fun]
 		v := callCFunc(f, a)

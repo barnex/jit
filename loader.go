@@ -97,7 +97,7 @@ func eval(code []byte, x, y float64) float64 {
 	return float64(C.eval(unsafe.Pointer(&code[0]), C.double(x), C.double(y)))
 }
 
-func callCFunc(f uintptr, x float64)float64{
+func callCFunc(f uintptr, x float64) float64 {
 	return float64(C.call_func(unsafe.Pointer(f), C.double(x)))
 }
 
