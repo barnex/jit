@@ -50,7 +50,7 @@ func parseBasicLit(node *ast.BasicLit) expr {
 		if err != nil {
 			panic(err)
 		}
-		return &constant{value: v}
+		return constant{value: v}
 	}
 }
 
@@ -61,23 +61,24 @@ func parseBinaryExpr(node *ast.BinaryExpr) expr {
 	default:
 		panic(fmt.Sprintf("syntax error:", node.Op))
 	case token.ADD, token.SUB, token.MUL, token.QUO:
-		return &binexpr{node.Op.String(), x, y}
+		return binexpr{node.Op.String(), x, y}
 	}
 }
 
 func parseCallExpr(node *ast.CallExpr) expr {
-	args := make([]expr, 0, len(node.Args))
-	for _, a := range node.Args {
-		args = append(args, parseExpr(a))
-	}
+	//args := make([]expr, 0, len(node.Args))
+	//for _, a := range node.Args {
+	//	args = append(args, parseExpr(a))
+	//}
 	fun := node.Fun.(*ast.Ident).Name
+	if len(node.Args) != 1{
+		panic(fmt.Sprintf("%v needs 1 argument, have %v", fun, len(node.Args)))
+	}
+	arg := parseExpr(node.Args[0])
 	if funcs[fun] == 0 {
 		panic(fmt.Sprintf("undefined: %q", fun))
 	}
-	if len(args) != 1 {
-		panic(fmt.Sprintf("%v needs 1 argument, have %v", fun, len(args)))
-	}
-	return &callexpr{fun, args}
+	return callexpr{fun, arg}
 }
 
 func parseIdent(node *ast.Ident) expr {
@@ -85,7 +86,7 @@ func parseIdent(node *ast.Ident) expr {
 	default:
 		panic(fmt.Sprintf("undefined: %v", node.Name))
 	case "x", "y":
-		return &variable{name: node.Name}
+		return variable{name: node.Name}
 	}
 }
 
@@ -96,6 +97,6 @@ func parseUnaryExpr(node *ast.UnaryExpr) expr {
 	case token.ADD:
 		return parseExpr(node.X)
 	case token.SUB:
-		return &binexpr{node.Op.String(), &constant{value: 0}, parseExpr(node.X)}
+		return binexpr{node.Op.String(), constant{value: 0}, parseExpr(node.X)}
 	}
 }

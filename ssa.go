@@ -4,6 +4,8 @@ import "fmt"
 
 var(
 	ass []ssaexpr
+	assOf = make(map[expr]int)
+	exprOf []expr
 )
 
 
@@ -17,36 +19,46 @@ func(s ssabin)String()string { return fmt.Sprintf("x%d %v x%d", s.x, s.op, s.y) 
 func(s ssacall)String()string { return fmt.Sprintf("%v(x%d)", s.fun, s.arg) }
 
 func SSADump(e expr) {
-	ass = []ssaexpr{
-		ssavar("x"),
-		ssavar("y"),
-	}
+	emit(variable{"x"}, ssavar("x"))
+	emit(variable{"y"}, ssavar("y"))
 	ssaDump(e)
 
 	for i,e := range ass{
-		fmt.Printf("x%v = %v\n", i, e)
+		fmt.Printf("x%v = %v	// %v\n", i, e, exprOf[i])
 	}
+
+	fmt.Println(assOf)
 }
 
-func ssaDump(e expr){
+func emit(e expr, s ssaexpr)int{
+		if i, ok:= assOf[e]; ok{
+			return	i
+		}
+
+	ass =append(ass, s)
+	if p, ok := assOf[e]; ok{
+			panic(fmt.Sprint("duplicate assignment of ", e, ", previously:", p))
+	}
+	exprOf = append(exprOf, e)
+	assOf[e] = len(ass)-1
+	return assOf[e]
+}
+
+func ssaDump(e expr)int{
 	switch e := e.(type) {
 	default:
 		panic(fmt.Sprintf("%v: %T", e, e))
-case *variable:
-		ass = append(ass, ssavar(e.name))
-		case *constant:
-		ass = append(ass, ssaconst(e.value))
-	case *binexpr:
-		ssaDump(e.x)
-		lhs := currAss()
-		ssaDump(e.y)
-		rhs := currAss()
-		ass = append(ass, ssabin{op: e.op, x:lhs, y:rhs})
-	case *callexpr:
-		ssaDump(e.args[0])
-		arg := currAss()
-		ass = append(ass, ssacall{fun:e.fun, arg:arg})
+	case variable:
+		return emit(e, ssavar(e.name))
+		case constant:
+		return emit(e, ssaconst(e.value))
+	case binexpr:
+		lhs := ssaDump(e.x)
+		rhs := ssaDump(e.y)
+		return emit(e, ssabin{op: e.op, x:lhs, y:rhs})
+	case callexpr:
+		arg := ssaDump(e.arg)
+		return emit(e, ssacall{fun:e.fun, arg:arg})
 	}
 }
 
-func currAss() int{return len(ass)-1}

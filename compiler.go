@@ -135,7 +135,7 @@ func (b *buf) dump(fname string) {
 	f.Write(b.Bytes())
 }
 
-func (e *variable) compile(b *buf) {
+func (e variable) compile(b *buf) {
 	switch e.name {
 	default:
 		panic("undefined variable:" + e.name)
@@ -146,11 +146,11 @@ func (e *variable) compile(b *buf) {
 	}
 }
 
-func (e *constant) compile(b *buf) {
+func (e constant) compile(b *buf) {
 	b.emit(mov_float_rax(e.value), mov_rax_xmm0)
 }
 
-func (e *binexpr) compile(b *buf) {
+func (e binexpr) compile(b *buf) {
 	// Determine which side of the binary expression to evaluate first:
 	//  * prefer deeper branch first, so we use least registers
 	//  * however, avoid function calls in the second branch,
@@ -190,15 +190,15 @@ func (e *binexpr) compile(b *buf) {
 	}
 }
 
-func (e *callexpr) compile(b *buf) {
-	if len(e.args) != 1 {
-		panic(fmt.Sprintf("%v arguments not supported", len(e.args)))
-	}
+func (e callexpr) compile(b *buf) {
+	//if len(e.args) != 1 {
+	//	panic(fmt.Sprintf("%v arguments not supported", len(e.args)))
+	//}
 	fptr := funcs[e.fun]
 	if fptr == 0 {
 		panic(fmt.Sprintf("undefined:", e.fun))
 	}
 
-	e.args[0].compile(b)
+	e.arg.compile(b)
 	b.emit(mov_uint_rax(fptr), call_rax)
 }

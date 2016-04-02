@@ -17,14 +17,14 @@ type variable struct {
 	name string
 }
 
-func (*variable) children() []expr {
+func (variable) children() []expr {
 	return nil
 }
 
-func (e *variable) simplify() expr {
+func (e variable) simplify() expr {
 	return e
 }
-func (e *variable) String() string {
+func (e variable) String() string {
 	return e.name
 }
 
@@ -32,15 +32,15 @@ type constant struct {
 	value float64
 }
 
-func (*constant) children() []expr {
+func (constant) children() []expr {
 	return nil
 }
 
-func (e *constant) simplify() expr {
+func (e constant) simplify() expr {
 	return e
 }
 
-func (e *constant) String() string {
+func (e constant) String() string {
 	return fmt.Sprint(e.value)
 }
 
@@ -54,11 +54,11 @@ type binexpr struct {
 	x, y expr
 }
 
-func (e *binexpr) children() []expr {
+func (e binexpr) children() []expr {
 	return []expr{e.x, e.y}
 }
 
-func (e *binexpr) simplify() expr {
+func (e binexpr) simplify() expr {
 	x := e.x.simplify()
 	y := e.y.simplify()
 
@@ -78,44 +78,42 @@ func (e *binexpr) simplify() expr {
 		case "/":
 			v = x / y
 		}
-		return &constant{v}
+		return constant{v}
 	}
-	return &binexpr{op: e.op, x: x, y: y}
+	return binexpr{op: e.op, x: x, y: y}
 }
 
-func (e *binexpr) String() string {
+func (e binexpr) String() string {
 	return fmt.Sprintf("(%v%v%v)", e.x, e.op, e.y)
 }
 
 type callexpr struct {
 	fun  string
-	args []expr
+	arg expr
 }
 
-func (e *callexpr) children() []expr {
-	var c []expr
-	for _, a := range e.args {
-		c = append(c, a)
-	}
-	return c
+func (e callexpr) children() []expr {
+	return []expr{e.arg}
 }
 
-func (e *callexpr) simplify() expr {
-	args := make([]expr, len(e.args))
-	for i, a := range e.args {
-		args[i] = a.simplify()
-	}
-	if len(args) == 1 && isConst(args[0]) {
-		a := args[0].(*constant).value
+func (e callexpr) simplify() expr {
+	//args := make([]expr, len(e.args))
+	//for i, a := range e.args {
+	//	args[i] = a.simplify()
+	//}
+	//if len(args) == 1 && isConst(args[0]) {
+	arg := e.arg.simplify()
+	if isConst(arg) {
+		a := arg.(*constant).value
 		f := funcs[e.fun]
 		v := callCFunc(f, a)
-		return &constant{v}
+		return constant{v}
 	}
-	return &callexpr{fun: e.fun, args: args}
+	return callexpr{fun: e.fun, arg: arg}
 }
 
-func (e *callexpr) String() string {
-	return fmt.Sprintf("%v(%v)", e.fun, e.args[0])
+func (e callexpr) String() string {
+	return fmt.Sprintf("%v(%v)", e.fun, e.arg)
 }
 
 // recordCalls iterates over the AST with given root
@@ -128,7 +126,7 @@ func recordCalls(root expr, m map[expr]bool) {
 			m[root] = true
 		}
 	}
-	if _, ok := root.(*callexpr); ok {
+	if _, ok := root.(callexpr); ok {
 		m[root] = true
 	}
 }
@@ -143,7 +141,7 @@ func recordDepth(root expr, m map[expr]int) {
 			m[root] = m[c]
 		}
 	}
-	if _, ok := root.(*binexpr); ok {
+	if _, ok := root.(binexpr); ok {
 		m[root]++
 	}
 }
