@@ -3,7 +3,7 @@
 package main
 
 import (
-	"fmt"
+	"log"
 	"os"
 
 	"github.com/barnex/just-in-time-compiler"
@@ -11,10 +11,8 @@ import (
 
 func main() {
 	expr := os.Args[1]
-	root, err := jit.Parse(expr)
+	_, err := jit.SSADump(expr)
 	if err != nil {
-		fmt.Fprintln(os.Stderr, err)
-		os.Exit(1)
+		log.Fatal(err)
 	}
-	jit.SSADump(root)
 }

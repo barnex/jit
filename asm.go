@@ -22,6 +22,25 @@ var (
 	div_xmm1_xmm0 = []byte{0xf2, 0x0f, 0x5e, 0xc1}       // divsd  %xmm1,%xmm0
 )
 
+// returns code for movq %xmmX,off(%rbp)
+// TODO: rename
+func mov_xmm_x_rbp(x byte, off int32) []byte {
+	if x > 7 {
+		panic(x)
+	}
+	reg := byte(0x85) | (x << 3)
+	return append([]byte{0x66, 0x0f, 0xd6, reg}, int32Bytes(off)...)
+}
+
+// TODO: rename
+func mov_x_rbp_xmm(off int32, x byte) []byte {
+	if x > 7 {
+		panic(x)
+	}
+	reg := byte(0x85) | (x << 3)
+	return append([]byte{0xf3, 0x0f, 0x7e, reg}, int32Bytes(off)...)
+}
+
 // returns code for movq $x,%rax
 func mov_float_rax(x float64) []byte {
 	return mov_imm_rax(float64Bytes(x))

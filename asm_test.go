@@ -5,6 +5,48 @@ import (
 	"testing"
 )
 
+func TestMovXmmXRbp(t *testing.T) {
+	tests := []struct {
+		x    byte
+		off  int32
+		want []byte
+	}{
+		// reference values obtained with gcc and objdump.
+		{0, -0x100, []byte{0x66, 0x0f, 0xd6, 0x85, 0x00, 0xff, 0xff, 0xff}},
+		{1, -0x100, []byte{0x66, 0x0f, 0xd6, 0x8d, 0x00, 0xff, 0xff, 0xff}},
+		{7, -0x100, []byte{0x66, 0x0f, 0xd6, 0xbd, 0x00, 0xff, 0xff, 0xff}},
+		{7, -0x400, []byte{0x66, 0x0f, 0xd6, 0xbd, 0x00, 0xfc, 0xff, 0xff}},
+	}
+	for _, test := range tests {
+		have := fmt.Sprintf("%x", mov_xmm_x_rbp(test.x, test.off))
+		want := fmt.Sprintf("%x", test.want)
+		if have != want {
+			t.Errorf("movq %%xmm%v,%d(%%rbp): have %v, want %v", test.x, test.off, have, want)
+		}
+	}
+}
+
+func TestMovXRbpXmm(t *testing.T) {
+	tests := []struct {
+		x    byte
+		off  int32
+		want []byte
+	}{
+		// reference values obtained with gcc and objdump.
+		{0, -0x100, []byte{0xf3, 0x0f, 0x7e, 0x85, 0x00, 0xff, 0xff, 0xff}},
+		{1, -0x100, []byte{0xf3, 0x0f, 0x7e, 0x8d, 0x00, 0xff, 0xff, 0xff}},
+		{7, -0x100, []byte{0xf3, 0x0f, 0x7e, 0xbd, 0x00, 0xff, 0xff, 0xff}},
+		{7, -0x400, []byte{0xf3, 0x0f, 0x7e, 0xbd, 0x00, 0xfc, 0xff, 0xff}},
+	}
+	for _, test := range tests {
+		have := fmt.Sprintf("%x", mov_x_rbp_xmm(test.off, test.x))
+		want := fmt.Sprintf("%x", test.want)
+		if have != want {
+			t.Errorf("movq %%xmm%v,%d(%%rbp): have %v, want %v", test.x, test.off, have, want)
+		}
+	}
+}
+
 func TestMovXmm(t *testing.T) {
 	tests := []struct {
 		r1, r2 int

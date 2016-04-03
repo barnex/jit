@@ -9,10 +9,14 @@ var (
 )
 
 type ssaentry struct {
-	e ssaexpr
+	i   int
+	e   ssaexpr
+	reg int //
 }
 
-//func (s*ssaentry)
+func (e ssaentry) String() string {
+	return fmt.Sprintf("x%d = %v", e.i, e.e)
+}
 
 type ssaexpr interface{}
 type ssavar string
@@ -43,7 +47,7 @@ func SSADump(ex string) (*Code, error) {
 	ssaDump(e)
 
 	for i, e := range ass {
-		fmt.Printf("x%v = %v	// %v\n", i, e.e, exprOf[i])
+		fmt.Println(e, "\t//", exprOf[i])
 	}
 
 	var b buf
@@ -65,7 +69,7 @@ func emit(e expr, s ssaexpr) int {
 		return i
 	}
 
-	ass = append(ass, ssaentry{e: s})
+	ass = append(ass, ssaentry{e: s, i: len(ass)})
 
 	if p, ok := assOf[e]; ok {
 		panic(fmt.Sprint("duplicate assignment of ", e, ", previously:", p))
