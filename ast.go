@@ -9,7 +9,6 @@ import (
 
 type expr interface {
 	children() []expr
-	simplify() expr
 }
 
 type variable struct {
@@ -20,9 +19,6 @@ func (variable) children() []expr {
 	return nil
 }
 
-func (e variable) simplify() expr {
-	return e
-}
 func (e variable) String() string {
 	return e.name
 }
@@ -33,10 +29,6 @@ type constant struct {
 
 func (constant) children() []expr {
 	return nil
-}
-
-func (e constant) simplify() expr {
-	return e
 }
 
 func (e constant) String() string {
@@ -57,31 +49,6 @@ func (e binexpr) children() []expr {
 	return []expr{e.x, e.y}
 }
 
-func (e binexpr) simplify() expr {
-	x := e.x.simplify()
-	y := e.y.simplify()
-
-	if isConst(x) && isConst(y) {
-		x := x.(*constant).value
-		y := y.(*constant).value
-		var v float64
-		switch e.op {
-		default:
-			panic("bug")
-		case "+":
-			v = x + y
-		case "-":
-			v = x - y
-		case "*":
-			v = x * y
-		case "/":
-			v = x / y
-		}
-		return constant{v}
-	}
-	return binexpr{op: e.op, x: x, y: y}
-}
-
 func (e binexpr) String() string {
 	return fmt.Sprintf("(%v%v%v)", e.x, e.op, e.y)
 }
@@ -93,22 +60,6 @@ type callexpr struct {
 
 func (e callexpr) children() []expr {
 	return []expr{e.arg}
-}
-
-func (e callexpr) simplify() expr {
-	//args := make([]expr, len(e.args))
-	//for i, a := range e.args {
-	//	args[i] = a.simplify()
-	//}
-	//if len(args) == 1 && isConst(args[0]) {
-	arg := e.arg.simplify()
-	if isConst(arg) {
-		a := arg.(*constant).value
-		f := funcs[e.fun]
-		v := callCFunc(f, a)
-		return constant{v}
-	}
-	return callexpr{fun: e.fun, arg: arg}
 }
 
 func (e callexpr) String() string {

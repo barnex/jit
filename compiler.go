@@ -22,9 +22,7 @@ func Compile(ex string) (c *Code, e error) {
 	}
 
 	if useConstFolding {
-		//fmt.Print(root)
-		root = root.simplify()
-		//fmt.Println("->", root)
+		root = FoldConst(root)
 	}
 
 	b := buf{hasCall: make(map[expr]bool), callDepth: make(map[expr]int)}
