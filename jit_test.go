@@ -5,59 +5,100 @@ import (
 	"testing"
 )
 
-func sqrt(x float64) float64 { return math.Sqrt(x) }
-func sin(x float64) float64  { return math.Sin(x) }
-func cos(x float64) float64  { return math.Cos(x) }
+var tests = map[string]func(float64, float64) float64{
+	"x": func(x float64, y float64) float64 {
+		return x
+	},
+	"y": func(x float64, y float64) float64 {
+		return y
+	},
+	"-x": func(x float64, y float64) float64 {
+		return -x
+	},
+	"x+y": func(x float64, y float64) float64 {
+		return x + y
+	},
+	"2+x+y+1": func(x float64, y float64) float64 {
+		return 2 + x + y + 1
+	},
+	"1": func(x float64, y float64) float64 {
+		return 1
+	},
+	"1.0": func(x float64, y float64) float64 {
+		return 1
+	},
+	"1+2": func(x float64, y float64) float64 {
+		return 1 + 2
+	},
+	"1-2": func(x float64, y float64) float64 {
+		return 1 - 2
+	},
+	"2*3": func(x float64, y float64) float64 {
+		return 2 * 3
+	},
+	"5/2": func(x float64, y float64) float64 {
+		return 5. / 2.
+	},
+	"2*(x+y)*(x-y)/2": func(x float64, y float64) float64 {
+		return 2 * (x + y) * (x - y) / 2
+	},
+	"1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1": func(x float64, y float64) float64 {
+		return 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1
+	},
+	"sqrt(x)": func(x float64, y float64) float64 {
+		return sqrt(x)
+	},
+	"sqrt(9)": func(x float64, y float64) float64 {
+		return sqrt(9)
+	},
+	"sqrt(x+y)": func(x float64, y float64) float64 {
+		return sqrt(x + y)
+	},
+	"sin(2/x)+cos(sqrt(x+y+1))": func(x float64, y float64) float64 {
+		return sin(2/x) + cos(sqrt(x+y+1))
+	},
+	"cos(9)": func(x float64, y float64) float64 {
+		return cos(9)
+	},
+	"sin(x+y)": func(x float64, y float64) float64 {
+		return sin(x + y)
+	},
+	"sqrt(sqrt(sqrt(x)))": func(x float64, y float64) float64 {
+		return sqrt(sqrt(sqrt(x)))
+	},
+	"1+2+(3+2*4+((((5+6*2)+7)+sqrt(8))+9)+10*sin(2-x+y/3))+11": func(x float64, y float64) float64 {
+		return 1 + 2 + (3 + 2*4 + ((((5 + 6*2) + 7) + sqrt(8)) + 9) + 10*sin(2-x+y/3)) + 11
+	},
+	"1+x+(y+2*4+((((5+y*2)+7)+sqrt(x))+y)+10*sin(2-x+y/x))+y": func(x float64, y float64) float64 {
+		return 1 + x + (y + 2*4 + ((((5 + y*2) + 7) + sqrt(x)) + y) + 10*sin(2-x+y/x)) + y
+	},
+	"1+2+(3+2*4+((((5+6*2)+7)+(8))+9)+10*sin(2-x+y/3))+11": func(x float64, y float64) float64 {
+		return 1 + 2 + (3 + 2*4 + ((((5 + 6*2) + 7) + (8)) + 9) + 10*sin(2-x+y/3)) + 11
+	},
+	"1+2+(3+2*4+((((5+6*2)+7)+(8))+9)+10*(2-x+y/3))+11": func(x float64, y float64) float64 {
+		return 1 + 2 + (3 + 2*4 + ((((5 + 6*2) + 7) + (8)) + 9) + 10*(2-x+y/3)) + 11
+	},
+}
 
 func TestJIT(t *testing.T) {
 	for _, useConstFolding = range []bool{true, false} {
 		for _, useCallDepth = range []bool{true, false} {
 			for _, useRegisters = range []bool{true, false} {
-				for _, x := range []float64{3} { //, -1e9, -123.4, -1, 0, 1, 123.4, 1e9} {
-					for _, y := range []float64{5} { //, -1e9, -123.4, -1, 0, 1, 123.4, 1e9} {
-						tests := []struct {
-							expr string
-							want float64
-						}{
-							{"x", x},
-							{"y", y},
-							{"-x", -x},
-							{"x+y", x + y},
-							{"2+x+y+1", 2 + x + y + 1},
-							{"1", 1},
-							{"1.0", 1},
-							{"1+2", 1 + 2},
-							{"1-2", 1 - 2},
-							{"2*3", 2 * 3},
-							{"5/2", 5. / 2.},
-							{"2*(x+y)*(x-y)/2", 2 * (x + y) * (x - y) / 2},
-							{"1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1", 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1},
-							{"sqrt(x)", sqrt(x)},
-							{"sqrt(9)", sqrt(9)},
-							{"sqrt(x+y)", sqrt(x + y)},
-							{"sin(2/x)+cos(sqrt(x+y+1))", sin(2/x) + cos(sqrt(x+y+1))},
-							{"cos(9)", cos(9)},
-							{"sin(x+y)", sin(x + y)},
-							{"sqrt(sqrt(sqrt(x)))", sqrt(sqrt(sqrt(x)))},
-							{"1+2+(3+2*4+((((5+6*2)+7)+sqrt(8))+9)+10*sin(2-x+y/3))+11", 1 + 2 + (3 + 2*4 + ((((5 + 6*2) + 7) + sqrt(8)) + 9) + 10*sin(2-x+y/3)) + 11},
-							{"1+x+(y+2*4+((((5+y*2)+7)+sqrt(x))+y)+10*sin(2-x+y/x))+y", 1 + x + (y + 2*4 + ((((5 + y*2) + 7) + sqrt(x)) + y) + 10*sin(2-x+y/x)) + y},
-							{"1+2+(3+2*4+((((5+6*2)+7)+(8))+9)+10*sin(2-x+y/3))+11", 1 + 2 + (3 + 2*4 + ((((5 + 6*2) + 7) + (8)) + 9) + 10*sin(2-x+y/3)) + 11},
-							{"1+2+(3+2*4+((((5+6*2)+7)+(8))+9)+10*(2-x+y/3))+11", 1 + 2 + (3 + 2*4 + ((((5 + 6*2) + 7) + (8)) + 9) + 10*(2-x+y/3)) + 11},
-						}
-
-						for _, test := range tests {
-							code, err := Compile(test.expr)
-							if err != nil {
-								t.Error(err)
-								continue
-							}
+				for expr, want := range tests {
+					code, err := Compile(expr)
+					if err != nil {
+						t.Fatal(err)
+					}
+					for _, x := range []float64{3, -1e9, -123.4, -1, 0, 1, 123.4, 1e9} {
+						for _, y := range []float64{5, -1e9, -123.4, -1, 0, 1, 123.4, 1e9} {
 							have := code.Eval(x, y)
-							code.Free()
-							if !equal(have, test.want) {
-								t.Errorf("%v with x=%v,y=%v: have %v, want: %v", test.expr, x, y, have, test.want)
+							if !equal(have, want(x, y)) {
+								t.Errorf("%v with x=%v,y=%v: have %v, want: %v", expr, x, y, have, want(x, y))
 							}
 						}
 					}
+
+					code.Free()
 				}
 			}
 		}
@@ -79,17 +120,6 @@ func TestErrors(t *testing.T) {
 			t.Errorf("Compile %q: expected error, got nil", test)
 		}
 	}
-}
-
-// equal returns whether x and y are approximately equal
-func equal(x, y float64) bool {
-	if math.IsNaN(x) && math.IsNaN(y) {
-		return true
-	}
-	if x == y {
-		return true
-	}
-	return math.Abs((x-y)/(x+y)) < 1e-14
 }
 
 func TestEval2D(t *testing.T) {
@@ -131,3 +161,18 @@ func TestEval2D(t *testing.T) {
 		}
 	}
 }
+
+// equal returns whether x and y are approximately equal
+func equal(x, y float64) bool {
+	if math.IsNaN(x) && math.IsNaN(y) {
+		return true
+	}
+	if x == y {
+		return true
+	}
+	return math.Abs((x-y)/(x+y)) < 1e-14
+}
+
+func sqrt(x float64) float64 { return math.Sqrt(x) }
+func sin(x float64) float64  { return math.Sin(x) }
+func cos(x float64) float64  { return math.Cos(x) }
