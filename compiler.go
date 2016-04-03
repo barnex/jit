@@ -37,7 +37,7 @@ func Compile(ex string) (c *Code, e error) {
 	b.emit(sub_rsp(16))                      // stack space for x, y
 	b.emit(mov_xmm0_rax, mov_rax_x_rbp(-8))  // x on stack
 	b.emit(mov_xmm1_rax, mov_rax_x_rbp(-16)) // y on stack
-	root.compile(&b)                         // function body (jit code)
+	b.compileExpr(root)                      // function body (jit code)
 	b.emit(add_rsp(16))                      // free stack space for x,y
 	b.emit(pop_rbp, ret)                     // return from function
 
@@ -135,7 +135,22 @@ func (b *buf) dump(fname string) {
 	f.Write(b.Bytes())
 }
 
-func (e variable) compile(b *buf) {
+func (b *buf) compileExpr(e expr) {
+	switch e := e.(type) {
+	default:
+		panic(fmt.Sprintf("compileExpr %T", e))
+	case binexpr:
+		b.compileBinexpr(e)
+	case callexpr:
+		b.compileCallexpr(e)
+	case constant:
+		b.compileConstant(e)
+	case variable:
+		b.compileVariable(e)
+	}
+}
+
+func (b *buf) compileVariable(e variable) {
 	switch e.name {
 	default:
 		panic("undefined variable:" + e.name)
@@ -146,11 +161,11 @@ func (e variable) compile(b *buf) {
 	}
 }
 
-func (e constant) compile(b *buf) {
+func (b *buf) compileConstant(e constant) {
 	b.emit(mov_float_rax(e.value), mov_rax_xmm0)
 }
 
-func (e binexpr) compile(b *buf) {
+func (b *buf) compileBinexpr(e binexpr) {
 	// Determine which side of the binary expression to evaluate first:
 	//  * prefer deeper branch first, so we use least registers
 	//  * however, avoid function calls in the second branch,
@@ -162,9 +177,9 @@ func (e binexpr) compile(b *buf) {
 		first, second = e.y, e.x
 	}
 
-	first.compile(b)
+	b.compileExpr(first)
 	stash := b.stash(b.hasCall[second])
-	second.compile(b)
+	b.compileExpr(second)
 
 	// Move the results back:
 	// y -> xmm0
@@ -190,7 +205,7 @@ func (e binexpr) compile(b *buf) {
 	}
 }
 
-func (e callexpr) compile(b *buf) {
+func (b *buf) compileCallexpr(e callexpr) {
 	//if len(e.args) != 1 {
 	//	panic(fmt.Sprintf("%v arguments not supported", len(e.args)))
 	//}
@@ -199,6 +214,6 @@ func (e callexpr) compile(b *buf) {
 		panic(fmt.Sprintf("undefined:", e.fun))
 	}
 
-	e.arg.compile(b)
+	b.compileExpr(e.arg)
 	b.emit(mov_uint_rax(fptr), call_rax)
 }

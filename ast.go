@@ -8,7 +8,6 @@ import (
 )
 
 type expr interface {
-	compile(b *buf)
 	children() []expr
 	simplify() expr
 }
@@ -88,7 +87,7 @@ func (e binexpr) String() string {
 }
 
 type callexpr struct {
-	fun  string
+	fun string
 	arg expr
 }
 

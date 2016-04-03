@@ -71,7 +71,7 @@ func parseCallExpr(node *ast.CallExpr) expr {
 	//	args = append(args, parseExpr(a))
 	//}
 	fun := node.Fun.(*ast.Ident).Name
-	if len(node.Args) != 1{
+	if len(node.Args) != 1 {
 		panic(fmt.Sprintf("%v needs 1 argument, have %v", fun, len(node.Args)))
 	}
 	arg := parseExpr(node.Args[0])
