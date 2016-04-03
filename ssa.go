@@ -3,7 +3,7 @@ package jit
 import "fmt"
 
 var (
-	ass    []ssaexpr
+	ass    []ssaentry
 	assOf  = make(map[expr]int)
 	exprOf []expr
 )
@@ -29,14 +29,35 @@ type ssacall struct {
 func (s ssabin) String() string  { return fmt.Sprintf("x%d %v x%d", s.x, s.op, s.y) }
 func (s ssacall) String() string { return fmt.Sprintf("%v(x%d)", s.fun, s.arg) }
 
-func SSADump(e expr) {
+func SSADump(ex string) (*Code, error) {
+	e, err := Parse(ex)
+	if err != nil {
+		return nil, err
+	}
+	ass = nil
+	assOf = make(map[expr]int)
+	exprOf = nil
+
 	emit(variable{"x"}, ssavar("x"))
 	emit(variable{"y"}, ssavar("y"))
 	ssaDump(e)
 
 	for i, e := range ass {
-		fmt.Printf("x%v = %v	// %v\n", i, e, exprOf[i])
+		fmt.Printf("x%v = %v	// %v\n", i, e.e, exprOf[i])
 	}
+
+	var b buf
+
+	b.emit(push_rbp, mov_rsp_rbp) // function preamble
+	//b.emit(sub_rsp(16))                      // stack space for x, y
+	//b.emit(add_rsp(16))                      // free stack space for x,y
+	b.emit(pop_rbp, ret) // return from function
+
+	instr, err := makeExecutable(b.Bytes())
+	if err != nil {
+		return nil, err
+	}
+	return &Code{instr}, nil
 }
 
 func emit(e expr, s ssaexpr) int {
@@ -44,7 +65,8 @@ func emit(e expr, s ssaexpr) int {
 		return i
 	}
 
-	ass = append(ass, s)
+	ass = append(ass, ssaentry{e: s})
+
 	if p, ok := assOf[e]; ok {
 		panic(fmt.Sprint("duplicate assignment of ", e, ", previously:", p))
 	}

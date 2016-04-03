@@ -10,7 +10,7 @@ import (
 	"log"
 	"net/http"
 
-	"github.com/barnex/jit"
+	"github.com/barnex/just-in-time-compiler"
 )
 
 var port = flag.String("http", ":8080", "HTTP service address")

@@ -6,7 +6,7 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/barnex/jit"
+	"github.com/barnex/just-in-time-compiler"
 )
 
 func main() {
