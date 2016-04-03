@@ -38,19 +38,44 @@ After parsing, we employ constant folding on the AST, i.e. replacing constant ex
 
 ## Compilation
 
-Now that we have a somewhat optimize AST, we can compile it into machine instructions.
-
 ### calling convention
 
 We generate code for a function body, following the System V AMD64 ABI calling conention (x, y are passed via `xmm0`, `xmm1` respectively. Result returned in `xmm0`)
 
-### locals
+## code generation
 
-Internally, we keep on using `xmm0` and `xmm1` as the arguments for function calls or binary expressions, and store results in `xmm0`. The original arguments x and y are safely stored as local variables on the stack.
+We iterate the AST depth first and for each node generate code that puts the result of that node in register `xmm0`.
+
+  * for x, y and constants, just move their value to `xmm0`
+  * for calls, first generate code for the argument, then call using `xmm0` as argument and leave the result in `xmm0`
+  * For binary expressions:
+    - generate code for one operand
+    - then move `xmm0` aside (to another register or the stack)
+    - generate code for the other operand
+    - finally do the operation, putting the result in `xmm0`.
+
+E.g.: for `(x+1)*y`, the tree gets iterated in the order of the pseudo instructions next to each node ([1], [2], ...) shown below:
+
+```
+       *  [6:xmm0->stack]
+          [8:stack->xmm1]
+          [9:xmm0*xmm1->xmm0]
+      / \
+     /   y  [7: y->xmm0]
+
+    +   [2: xmm0->stack]
+        [4: stack->xmm1]
+        [5: xmm0+xmm1->xmm0]
+   / \
+  /   1  [3: 1->xmm0]
+ /
+x  [1: x->xmm0]
+```
+
 
 ### registerization
 
-We generate code using a stack machine strategy, but registerize into `xmm2`-`xmm7` where possible -- or spill to the stack otherwise.
+We generate code using a stack machine strategy like shown above, but registerize into `xmm2`-`xmm7` where possible -- and only spill to the stack otherwise.
 
 For binary expressions, we evaluate the "deepest" branch first. This ensures we only need `O(log(N))` registers for `N` binary expression nodes. Otherwise, unbalanced expressions like `(x+(x+(x+(x+(x+(x+(x+(x+(x+(x+y))))))))))` would require `O(N)` registers and would quickly spill to the stack.
 
