@@ -35,11 +35,6 @@ func (e constant) String() string {
 	return fmt.Sprint(e.value)
 }
 
-func isConst(e expr) bool {
-	_, ok := e.(*constant)
-	return ok
-}
-
 type binexpr struct {
 	op   string
 	x, y expr

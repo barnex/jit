@@ -1,5 +1,7 @@
 package jit
 
+import "fmt"
+
 func FoldConst(e expr) expr {
 	switch e := e.(type) {
 	default:
@@ -9,6 +11,11 @@ func FoldConst(e expr) expr {
 	case callexpr:
 		return foldCallexpr(e)
 	}
+}
+
+func isConst(e expr) bool {
+	_, ok := e.(*constant)
+	return ok
 }
 
 func foldBinexpr(e binexpr) expr {
@@ -21,7 +28,7 @@ func foldBinexpr(e binexpr) expr {
 		var v float64
 		switch e.op {
 		default:
-			panic("bug")
+			panic(fmt.Sprintf("foldBinexpr %v", e.op))
 		case "+":
 			v = x + y
 		case "-":
