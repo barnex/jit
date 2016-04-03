@@ -42,7 +42,7 @@ After parsing, we employ constant folding on the AST, i.e. replacing constant ex
 
 We generate code for a function body, following the System V AMD64 ABI calling conention (x, y are passed via `xmm0`, `xmm1` respectively. Result returned in `xmm0`)
 
-## code generation
+### code generation
 
 We iterate the AST depth first and for each node generate code that puts the result of that node in register `xmm0`.
 
@@ -108,11 +108,10 @@ mov    %rax,-0x10(%rbp)
 movabs $0x3ff0000000000000,%rax
 movq   %rax,%xmm0
 movq   %xmm0,%xmm2
-mov    -0x10(%rbp),%rax
-movq   %rax,%xmm0
+movq   -0x10(%rbp),%xmm0
 movq   %xmm2,%xmm1
 addsd  %xmm1,%xmm0
-movabs $0x401c30,%rax
+movabs $0x401c90,%rax
 callq  *%rax
 movq   %xmm0,%xmm2
 movabs $0x4000000000000000,%rax
@@ -123,15 +122,14 @@ movq   %xmm0,%xmm2
 movabs $0x3ff0000000000000,%rax
 movq   %rax,%xmm0
 movq   %xmm0,%xmm3
-mov    -0x8(%rbp),%rax
-movq   %rax,%xmm0
+movq   -0x8(%rbp),%xmm0
 movq   %xmm3,%xmm1
 addsd  %xmm1,%xmm0
 movq   %xmm2,%xmm1
 mulsd  %xmm1,%xmm0
 add    $0x10,%rsp
 pop    %rbp
-retq   
+retq 
 ```
 
 ## Assembler
