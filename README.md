@@ -166,7 +166,9 @@ Compilation is _fast_. Compiling and MMAPping `1+x+(3+y*4+((((x+y*2)+x)+sqrt(8))
 
 ### Execution
 
-Execution speed is fast too. `1+x+(3+y*4+((((x+y*2)+x)+sqrt(8))+y)+10*sin(2-x+y/3))+11`` evaluates in 51 ns, while an ahead-of-time compiled version using the pretty mature Go 1.6 compiler evaluates in 41 ns. Not bad for a tiny toy project.
+Execution speed is fast too. Most expressions evaluate only about 10% slower than an ahead-of-time compiled version using Go 1.6.
+
+E.g.: `1+x+(3+y*4+((((x+y*2)+x)+sqrt(8))+y)+10*sin(2-x+y/3))+11`` evaluates in 46 ns, while the ahead-of-time compiled Go version evaluates in 41 ns.
 
 ## Use case: implicit function plotter
 
