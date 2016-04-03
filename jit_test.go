@@ -81,10 +81,15 @@ var tests = map[string]func(float64, float64) float64{
 }
 
 func TestJIT(t *testing.T) {
-	for _, useConstFolding = range []bool{true, false} {
-		for _, useCallDepth = range []bool{true, false} {
-			for _, useRegisters = range []bool{true, false} {
-				for expr, want := range tests {
+	defer func() {
+		useConstFolding = true
+		useCallDepth = true
+		useRegisters = true
+	}()
+	for expr, want := range tests {
+		for _, useConstFolding = range []bool{true, false} {
+			for _, useCallDepth = range []bool{true, false} {
+				for _, useRegisters = range []bool{true, false} {
 					code, err := Compile(expr)
 					if err != nil {
 						t.Fatal(err)
