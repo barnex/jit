@@ -153,9 +153,9 @@ func (b *buf) compileVariable(e variable) {
 	default:
 		panic("undefined variable:" + e.name)
 	case "x":
-		b.emit(mov_x_rbp_rax(-8), mov_rax_xmm0)
+		b.emit(mov_x_rbp_xmm(-8, 0))
 	case "y":
-		b.emit(mov_x_rbp_rax(-16), mov_rax_xmm0)
+		b.emit(mov_x_rbp_xmm(-16, 0))
 	}
 }
 
