@@ -7,59 +7,44 @@ import (
 	"fmt"
 )
 
+// any expression node in the AST
 type expr interface {
 	children() []expr
 }
 
+// variable, "x" or "y".
 type variable struct {
 	name string
 }
 
-func (variable) children() []expr {
-	return nil
-}
+func (variable) children() []expr { return nil }
+func (e variable) String() string { return e.name }
 
-func (e variable) String() string {
-	return e.name
-}
-
+// numerical constant, like 3.14
 type constant struct {
 	value float64
 }
 
-func (constant) children() []expr {
-	return nil
-}
+func (constant) children() []expr { return nil }
+func (e constant) String() string { return fmt.Sprint(e.value) }
 
-func (e constant) String() string {
-	return fmt.Sprint(e.value)
-}
-
+// binary expression, like x + y
 type binexpr struct {
 	op   string
 	x, y expr
 }
 
-func (e binexpr) children() []expr {
-	return []expr{e.x, e.y}
-}
+func (e binexpr) children() []expr { return []expr{e.x, e.y} }
+func (e binexpr) String() string   { return fmt.Sprintf("(%v%v%v)", e.x, e.op, e.y) }
 
-func (e binexpr) String() string {
-	return fmt.Sprintf("(%v%v%v)", e.x, e.op, e.y)
-}
-
+// function call, like sin(x)
 type callexpr struct {
 	fun string
 	arg expr
 }
 
-func (e callexpr) children() []expr {
-	return []expr{e.arg}
-}
-
-func (e callexpr) String() string {
-	return fmt.Sprintf("%v(%v)", e.fun, e.arg)
-}
+func (e callexpr) children() []expr { return []expr{e.arg} }
+func (e callexpr) String() string   { return fmt.Sprintf("%v(%v)", e.fun, e.arg) }
 
 // recordCalls iterates over the AST with given root
 // and records, in m, for each encountered expression whether it contains a function call.

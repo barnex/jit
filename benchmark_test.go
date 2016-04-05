@@ -19,7 +19,7 @@ func BenchmarkCompileBig(b *testing.B) {
 	}
 }
 
-func BenchmarkJITSmall(b *testing.B) {
+func BenchmarkSmallJIT(b *testing.B) {
 	code, err := Compile("(x+y)*2 + (1+x) / y")
 	if err != nil {
 		b.Fatal(err)
@@ -30,13 +30,27 @@ func BenchmarkJITSmall(b *testing.B) {
 	for iy := range matrix {
 		matrix[iy] = dst[iy*nx : (iy+1)*nx]
 	}
+	n := b.N / (nx * ny)
 	b.ResetTimer()
-	for i := 0; i < b.N; i++ {
+	for i := 0; i < n; i++ {
 		code.Eval2D(dst, -1, 1, nx, -1, 1, ny)
 	}
 }
 
-func BenchmarkJITBig(b *testing.B) {
+func BenchmarkSmallGo(b *testing.B) {
+	dst := make([]float64, nx*ny)
+	matrix := make([][]float64, ny)
+	for iy := range matrix {
+		matrix[iy] = dst[iy*nx : (iy+1)*nx]
+	}
+	n := b.N / (nx * ny)
+	b.ResetTimer()
+	for i := 0; i < n; i++ {
+		eval2dGo(nativeGo, matrix, -1, 1, nx, -1, 1, ny)
+	}
+}
+
+func BenchmarkBigJIT(b *testing.B) {
 	code, err := Compile("1+x+(3+y*4+((((x+y*2)+x)+sqrt(8))+y)+10*sin(2-x+y/3))+11")
 	if err != nil {
 		b.Fatal(err)
@@ -47,38 +61,30 @@ func BenchmarkJITBig(b *testing.B) {
 	for iy := range matrix {
 		matrix[iy] = dst[iy*nx : (iy+1)*nx]
 	}
+	n := b.N / (nx * ny)
 	b.ResetTimer()
-	for i := 0; i < b.N; i++ {
+	for i := 0; i < n; i++ {
 		code.Eval2D(dst, -1, 1, nx, -1, 1, ny)
 	}
 }
 
-func BenchmarkNativeGoSmall(b *testing.B) {
+func BenchmarkBigGo(b *testing.B) {
 	dst := make([]float64, nx*ny)
 	matrix := make([][]float64, ny)
 	for iy := range matrix {
 		matrix[iy] = dst[iy*nx : (iy+1)*nx]
 	}
+	n := b.N / (nx * ny)
 	b.ResetTimer()
-	for i := 0; i < b.N; i++ {
-		eval2dGo(nativeGo, matrix, -1, 1, nx, -1, 1, ny)
+	for i := 0; i < n; i++ {
+		eval2dGo(nativeGoBig, matrix, -1, 1, nx, -1, 1, ny)
 	}
 }
+
 func nativeGo(x, y float64) float64 {
 	return (x+y)*2 + (1+x)/y
 }
 
-func BenchmarkNativeGoBig(b *testing.B) {
-	dst := make([]float64, nx*ny)
-	matrix := make([][]float64, ny)
-	for iy := range matrix {
-		matrix[iy] = dst[iy*nx : (iy+1)*nx]
-	}
-	b.ResetTimer()
-	for i := 0; i < b.N; i++ {
-		eval2dGo(nativeGoBig, matrix, -1, 1, nx, -1, 1, ny)
-	}
-}
 func nativeGoBig(x, y float64) float64 {
 	return 1 + x + (3 + y*4 + ((((x + y*2) + x) + sqrt(8)) + y) + 10*sin(2-x+y/3)) + 11
 }
