@@ -78,6 +78,9 @@ var tests = map[string]func(float64, float64) float64{
 	"1+2+(3+2*4+((((5+6*2)+7)+(8))+9)+10*(2-x+y/3))+11": func(x float64, y float64) float64 {
 		return 1 + 2 + (3 + 2*4 + ((((5 + 6*2) + 7) + (8)) + 9) + 10*(2-x+y/3)) + 11
 	},
+	"(1+2+(3+2*4+((((5+6*2)+7)+(8))+9)+10*(2-x+y/3))+11)*(sin(x*y*2+1)*cos(1+2+x+y)+sin(2/x)+cos(sqrt(x+y+1)))": func(x float64, y float64) float64 {
+		return (1 + 2 + (3 + 2*4 + ((((5 + 6*2) + 7) + (8)) + 9) + 10*(2-x+y/3)) + 11) * (sin(x*y*2+1)*cos(1+2+x+y) + sin(2/x) + cos(sqrt(x+y+1)))
+	},
 }
 
 func TestJIT(t *testing.T) {
@@ -94,8 +97,8 @@ func TestJIT(t *testing.T) {
 					if err != nil {
 						t.Fatal(err)
 					}
-					for _, x := range []float64{3, -1e9, -123.4, -1, 0, 1, 123.4, 1e9} {
-						for _, y := range []float64{5, -1e9, -123.4, -1, 0, 1, 123.4, 1e9} {
+					for _, x := range []float64{3, -1e3, -123.4, -1, 0, 1, 123.4, 1e3} {
+						for _, y := range []float64{5, -1e3, -123.4, -1, 0, 1, 123.4, 1e3} {
 							have := code.Eval(x, y)
 							if !equal(have, want(x, y)) {
 								t.Errorf("%v with x=%v,y=%v: have %v, want: %v", expr, x, y, have, want(x, y))
@@ -135,7 +138,6 @@ func TestEval2D(t *testing.T) {
 	for iy := range matrix {
 		matrix[iy] = dst[iy*nx : (iy+1)*nx]
 	}
-	//code, err := Compile("x+y")
 	code, err := Compile("x+y")
 	if err != nil {
 		t.Fatal(err)

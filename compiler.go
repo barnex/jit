@@ -6,6 +6,7 @@ import (
 	"os"
 )
 
+// optimization settings
 var (
 	useRegisters    = true
 	useCallDepth    = true

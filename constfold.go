@@ -2,6 +2,9 @@ package jit
 
 import "fmt"
 
+// FoldConst returns a new expression where all constant subexpressions have been replaced by numbers.
+// E.g.:
+// 	1+1 -> 2
 func FoldConst(e expr) expr {
 	switch e := e.(type) {
 	default:
@@ -44,11 +47,6 @@ func foldBinexpr(e binexpr) expr {
 }
 
 func foldCallexpr(e callexpr) expr {
-	//args := make([]expr, len(e.args))
-	//for i, a := range e.args {
-	//	args[i] = a.simplify()
-	//}
-	//if len(args) == 1 && isConst(args[0]) {
 	arg := FoldConst(e.arg)
 	if isConst(arg) {
 		a := arg.(*constant).value

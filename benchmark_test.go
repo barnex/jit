@@ -68,6 +68,18 @@ func BenchmarkBigJIT(b *testing.B) {
 	}
 }
 
+func BenchmarkBigJITNoOpt(b *testing.B) {
+	defer func() {
+		useRegisters = true
+		useConstFolding = true
+		useCallDepth = true
+	}()
+	useRegisters = false
+	useConstFolding = false
+	useCallDepth = false
+	BenchmarkBigJIT(b)
+}
+
 func BenchmarkBigGo(b *testing.B) {
 	dst := make([]float64, nx*ny)
 	matrix := make([][]float64, ny)
