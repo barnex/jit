@@ -66,10 +66,6 @@ func parseBinaryExpr(node *ast.BinaryExpr) expr {
 }
 
 func parseCallExpr(node *ast.CallExpr) expr {
-	//args := make([]expr, 0, len(node.Args))
-	//for _, a := range node.Args {
-	//	args = append(args, parseExpr(a))
-	//}
 	fun := node.Fun.(*ast.Ident).Name
 	if len(node.Args) != 1 {
 		panic(fmt.Sprintf("%v needs 1 argument, have %v", fun, len(node.Args)))

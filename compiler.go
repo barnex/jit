@@ -40,10 +40,9 @@ func Compile(ex string) (c *Code, e error) {
 	b.emit(add_rsp(16))           // free stack space for x,y
 	b.emit(pop_rbp, ret)          // return from function
 
-	//b.dump("b.out")
 	//fmt.Println(ex, ":", b.nRegistersHit, "reg hits,", b.maxReg, "highest register used, ", b.nStackSpill, "stack spills")
 
-	instr, err := makeExecutable(b.Bytes())
+	instr, err := MakeExecutable(b.Bytes())
 	if err != nil {
 		return nil, err
 	}
@@ -66,8 +65,11 @@ func (b *buf) emit(ops ...[]byte) {
 	}
 }
 
+// stash emits code for moving xmm0 to a free register.
+// If no registers are free or destroyRegs == true,
+// then the stack is used instead.
+// It returns the xmm register number used, or -1 if the stack was used.
 func (b *buf) stash(destroyRegs bool) int {
-	// stash result
 	reg := -1
 	if !destroyRegs {
 		reg = b.allocReg()
@@ -82,6 +84,11 @@ func (b *buf) stash(destroyRegs bool) int {
 	return reg
 }
 
+// unstash emits code for the opposite operation of stash,
+// moving the stashed aside value into xmm0 or xmm1 (specified by dest).
+// E.g., this is a no-op:
+// 	reg := buf.stash(false)
+// 	buf.unstash(reg, 0)
 func (b *buf) unstash(reg, dest int) {
 	switch {
 	case reg == -1 && dest == 1:
@@ -96,6 +103,8 @@ func (b *buf) unstash(reg, dest int) {
 	b.freeReg(reg)
 }
 
+// allocReg returns a currently free xmm register number,
+// or -1 if all are currently in use.
 func (b *buf) allocReg() int {
 	if !useRegisters {
 		b.nStackSpill++
@@ -115,6 +124,8 @@ func (b *buf) allocReg() int {
 	return -1
 }
 
+// freeReg must be called when a register returned by allocReg
+// is no longer needed.
 func (b *buf) freeReg(reg int) {
 	if reg == -1 {
 		return
@@ -125,14 +136,6 @@ func (b *buf) freeReg(reg int) {
 	b.usedReg[reg] = false
 }
 
-func (b *buf) dump(fname string) {
-	f, err := os.Create(fname)
-	if err != nil {
-		panic(err)
-	}
-	defer f.Close()
-	f.Write(b.Bytes())
-}
 
 func (b *buf) compileExpr(e expr) {
 	switch e := e.(type) {
@@ -205,9 +208,6 @@ func (b *buf) compileBinexpr(e binexpr) {
 }
 
 func (b *buf) compileCallexpr(e callexpr) {
-	//if len(e.args) != 1 {
-	//	panic(fmt.Sprintf("%v arguments not supported", len(e.args)))
-	//}
 	fptr := funcs[e.fun]
 	if fptr == 0 {
 		panic(fmt.Sprintf("undefined:", e.fun))
@@ -215,4 +215,16 @@ func (b *buf) compileCallexpr(e callexpr) {
 
 	b.compileExpr(e.arg)
 	b.emit(mov_uint_rax(fptr), call_rax)
+}
+
+
+// dump saves the code to a file so it can be inspected. E.g. using:
+// 	objdump -D -b binary -m i386:x86-64 --insn-width 10 filename
+func (b *buf) dump(fname string) {
+	f, err := os.Create(fname)
+	if err != nil {
+		panic(err)
+	}
+	defer f.Close()
+	f.Write(b.Bytes())
 }

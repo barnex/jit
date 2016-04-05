@@ -1,5 +1,11 @@
 //+build ignore
 
+/*
+Implicit function plotter. Example usage: visit
+ 	http://localhost:8080/x*x+y*y-1
+To plot the curve defined by
+ 	x*x + y*y - 1 == 0
+*/
 package main
 
 import (
