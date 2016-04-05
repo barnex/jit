@@ -33,14 +33,14 @@ func Compile(ex string) (c *Code, e error) {
 
 	b.emit(push_rbp, mov_rsp_rbp)            // function preamble
 	b.emit(sub_rsp(16))                      // stack space for x, y
-	b.emit(mov_xmm0_rax, mov_rax_x_rbp(-8))  // x on stack
-	b.emit(mov_xmm1_rax, mov_rax_x_rbp(-16)) // y on stack
+	b.emit(mov_xmm_x_rbp(0, -8))  // x on stack
+	b.emit(mov_xmm_x_rbp(1, -16)) // y on stack
 	b.compileExpr(root)                      // function body (jit code)
 	b.emit(add_rsp(16))                      // free stack space for x,y
 	b.emit(pop_rbp, ret)                     // return from function
 
-	b.dump("b.out")
-	fmt.Println(ex, ":", b.nRegistersHit, "reg hits,", b.maxReg, "highest register used, ", b.nStackSpill, "stack spills")
+	//b.dump("b.out")
+	//fmt.Println(ex, ":", b.nRegistersHit, "reg hits,", b.maxReg, "highest register used, ", b.nStackSpill, "stack spills")
 
 	instr, err := makeExecutable(b.Bytes())
 	if err != nil {

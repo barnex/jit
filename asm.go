@@ -22,22 +22,21 @@ var (
 	div_xmm1_xmm0 = []byte{0xf2, 0x0f, 0x5e, 0xc1}       // divsd  %xmm1,%xmm0
 )
 
-// returns code for movq %xmmX,off(%rbp)
-// TODO: rename
-func mov_xmm_x_rbp(x byte, off int32) []byte {
-	if x > 7 {
-		panic(x)
+// returns code for movq %xmmR1,off(%rbp)
+func mov_xmm_x_rbp(r1 byte, off int32) []byte {
+	if r1 > 7 {
+		panic("movq: unsupported register")
 	}
-	reg := byte(0x85) | (x << 3)
+	reg := byte(0x85) | (r1 << 3)
 	return append([]byte{0x66, 0x0f, 0xd6, reg}, int32Bytes(off)...)
 }
 
-// TODO: rename
-func mov_x_rbp_xmm(off int32, x byte) []byte {
-	if x > 7 {
-		panic(x)
+// returns code for movq off(%rbp), xmmR1
+func mov_x_rbp_xmm(off int32, r1 byte) []byte {
+	if r1 > 7 {
+		panic("movq: unsupported register")
 	}
-	reg := byte(0x85) | (x << 3)
+	reg := byte(0x85) | (r1 << 3)
 	return append([]byte{0xf3, 0x0f, 0x7e, reg}, int32Bytes(off)...)
 }
 
@@ -66,30 +65,10 @@ func add_rsp(x uint32) []byte {
 	return append([]byte{0x48, 0x81, 0xc4}, uint32Bytes(x)...)
 }
 
-// returns code for movq x(%rsp),%rax
-func mov_x_rbp_rax(x int32) []byte {
-	return append([]byte{0x48, 0x8b, 0x85}, int32Bytes(x)...)
-}
-
-// returns code for movq %rax,x(%rbp)
-func mov_rax_x_rbp(x int32) []byte {
-	return append([]byte{0x48, 0x89, 0x85}, int32Bytes(x)...)
-}
-
-// returns code for movq %xmm0,x(%rbp)
-func mov_xmm0_x_rbp(x int32) []byte {
-	return append([]byte{0x66, 0x0f, 0xd6, 0x85}, int32Bytes(x)...)
-}
-
-// returns code for movq x(%rbp),%xmm0
-func mov_x_rbp_xmm0(x int32) []byte {
-	return append([]byte{0xf3, 0x0f, 0x7e, 0x85}, int32Bytes(x)...)
-}
-
 // returns code for movq %r1,%r2
 func mov_xmm(r1, r2 int) []byte {
 	if r1 > 7 || r2 > 7 {
-		panic("mov_xmm: bad register")
+		panic("movq: unsupported register")
 	}
 	regs := byte(0xc0) | byte(r2)<<3 | byte(r1)
 	return []byte{0xf3, 0x0f, 0x7e, regs}
