@@ -1,4 +1,4 @@
-#jit
+# jit
 
 This is a toy just-in-time compiler for arithmetic expressions of floating-point variables x and y, like `sqrt(x*x + y*y) - 2*cos(x+1)`. Intended for fun and learning only. Written in Go and C.
 
